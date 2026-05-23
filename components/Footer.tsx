@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Footer() {
   return (
@@ -7,14 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.25)] flex items-center justify-center">
-                <span className="text-[#c9a84c] font-bold text-sm">5G</span>
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="text-white font-semibold text-sm">5GM Gold</span>
-                <span className="text-[#c9a84c] text-[10px] tracking-[0.15em] uppercase">Private Platform</span>
-              </div>
+            <div className="mb-4">
+              <Image src="/logo.png" alt="5GM Gold" width={120} height={40} className="h-8 w-auto object-contain" />
             </div>
             <p className="text-[#5a5a66] text-sm leading-relaxed max-w-xs">
               A private trading command centre built for traders serious about refinement, discipline, and consistent execution.

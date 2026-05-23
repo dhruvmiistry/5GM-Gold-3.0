@@ -37,11 +37,11 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-5xl sm:text-6xl md:text-7xl font-light text-white leading-[1.1] tracking-tight mb-6"
+          className="font-display text-5xl sm:text-6xl md:text-7xl text-white leading-[1.1] tracking-tight mb-6"
         >
           Your private trading
           <br />
-          <span className="text-gold-gradient font-normal">command centre.</span>
+          <span className="text-gold-gradient">command centre.</span>
         </motion.h1>
 
         {/* Subtitle */}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
 import { Eye, EyeOff, Loader2, ChevronDown } from 'lucide-react'
 
@@ -51,14 +52,8 @@ export default function SignupPage() {
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <Link href="/" className="flex items-center gap-2.5 mb-2">
-            <div className="w-9 h-9 rounded-xl bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.25)] flex items-center justify-center">
-              <span className="text-[#c9a84c] font-bold text-base">5G</span>
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-white font-semibold text-base">5GM</span>
-              <span className="text-[#c9a84c] text-[10px] tracking-[0.15em] uppercase">Gold</span>
-            </div>
+          <Link href="/" className="mb-2">
+            <Image src="/logo.png" alt="5GM Gold" width={140} height={44} className="h-10 w-auto object-contain" />
           </Link>
           <h1 className="text-white text-2xl font-light mt-6 mb-2">Create free account</h1>
           <p className="text-[#5a5a66] text-sm text-center">Access free weekly briefings from four traders</p>

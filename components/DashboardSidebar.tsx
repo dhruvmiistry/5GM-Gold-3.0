@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -27,16 +28,16 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, locked: false },
-  { label: 'Free Briefings', href: '/dashboard/free-briefings', icon: Play, locked: false, badge: 'New' },
-  { label: 'Weekly Outlooks', href: '/dashboard/weekly-outlooks', icon: TrendingUp, locked: true },
-  { label: 'Live Sessions', href: '/dashboard/live-sessions', icon: Radio, locked: true },
-  { label: 'Gold Modules', href: '/dashboard/gold-modules', icon: BookOpen, locked: true },
-  { label: 'Strategy Vault', href: '/dashboard/strategy-vault', icon: Shield, locked: true },
-  { label: 'Market Breakdowns', href: '/dashboard/market-breakdowns', icon: BarChart2, locked: false },
-  { label: 'Revision Material', href: '/dashboard/revision-material', icon: BookMarked, locked: true },
-  { label: 'Announcements', href: '/dashboard/announcements', icon: Bell, locked: false, badge: '2' },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings, locked: false },
+  { label: 'Dashboard',         href: '/dashboard',                    icon: LayoutDashboard, locked: false },
+  { label: 'Free Briefings',    href: '/dashboard/free-briefings',     icon: Play,            locked: false, badge: 'New' },
+  { label: 'Weekly Outlooks',   href: '/dashboard/weekly-outlooks',    icon: TrendingUp,      locked: true },
+  { label: 'Live Sessions',     href: '/dashboard/live-sessions',      icon: Radio,           locked: true },
+  { label: 'Gold Modules',      href: '/dashboard/gold-modules',       icon: BookOpen,        locked: true },
+  { label: 'Strategy Vault',    href: '/dashboard/strategy-vault',     icon: Shield,          locked: true },
+  { label: 'Market Breakdowns', href: '/dashboard/market-breakdowns',  icon: BarChart2,       locked: false },
+  { label: 'Revision Material', href: '/dashboard/revision-material',  icon: BookMarked,      locked: true },
+  { label: 'Announcements',     href: '/dashboard/announcements',      icon: Bell,            locked: false, badge: '2' },
+  { label: 'Settings',          href: '/dashboard/settings',           icon: Settings,        locked: false },
 ]
 
 interface DashboardSidebarProps {
@@ -49,31 +50,30 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
+
       {/* Logo */}
-      <div className="p-5 border-b border-[rgba(255,255,255,0.06)]">
+      <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.055)]">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.25)] flex items-center justify-center">
-              <span className="text-[#c9a84c] font-bold text-xs">5G</span>
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-white font-semibold text-sm">5GM</span>
-              <span className="text-[#c9a84c] text-[9px] tracking-[0.15em] uppercase">Gold</span>
-            </div>
+          <Link href="/" className="flex items-center opacity-90 hover:opacity-100 transition-opacity">
+            <Image src="/logo.png" alt="5GM Gold" width={100} height={32} className="h-7 w-auto object-contain" />
           </Link>
           {onMobileClose && (
-            <button onClick={onMobileClose} className="lg:hidden text-[#5a5a66] hover:text-white">
-              <X size={18} />
+            <button
+              onClick={onMobileClose}
+              className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center text-[#5a5a66] hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all"
+            >
+              <X size={15} />
             </button>
           )}
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+
         {/* Free section */}
-        <div className="mb-1">
-          <p className="text-[#5a5a66] text-[10px] font-semibold uppercase tracking-wider px-3 py-2">Free Access</p>
+        <div className="mb-3">
+          <p className="section-label px-3 pb-2">Free Access</p>
           {navItems.filter(i => !i.locked).map(item => {
             const isActive = pathname === item.href
             return (
@@ -83,25 +83,27 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
                 onClick={onMobileClose}
                 className={`sidebar-link ${isActive ? 'active' : ''}`}
               >
-                <item.icon size={16} />
-                <span className="flex-1">{item.label}</span>
+                <item.icon size={15} strokeWidth={isActive ? 2 : 1.75} />
+                <span className="flex-1 font-medium">{item.label}</span>
                 {item.badge && !isActive && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(201,168,76,0.12)] text-[#c9a84c] font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(201,168,76,0.14)] text-[#c9a84c] font-semibold tracking-wide">
                     {item.badge}
                   </span>
                 )}
-                {isActive && <ChevronRight size={12} className="opacity-40" />}
+                {isActive && (
+                  <ChevronRight size={11} className="text-[#c9a84c] opacity-60" />
+                )}
               </Link>
             )
           })}
         </div>
 
         {/* Gold section */}
-        <div className="pt-2">
-          <p className="text-[#5a5a66] text-[10px] font-semibold uppercase tracking-wider px-3 py-2 flex items-center gap-2">
-            <span>Gold Access</span>
-            <span className="w-1 h-1 rounded-full bg-[#c9a84c] pulse-glow" />
-          </p>
+        <div>
+          <div className="flex items-center gap-2 px-3 pb-2">
+            <p className="section-label">Gold Access</p>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+          </div>
           {navItems.filter(i => i.locked).map(item => (
             <Link
               key={item.href}
@@ -109,24 +111,28 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
               onClick={onMobileClose}
               className="sidebar-link locked-nav"
             >
-              <item.icon size={16} />
-              <span className="flex-1">{item.label}</span>
-              <Lock size={11} className="text-[#5a5a66]" />
+              <item.icon size={15} strokeWidth={1.75} />
+              <span className="flex-1 font-medium">{item.label}</span>
+              <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
             </Link>
           ))}
         </div>
       </nav>
 
-      {/* Gold status */}
-      <div className="p-3 border-t border-[rgba(255,255,255,0.06)]">
-        <div className="p-3 rounded-xl bg-[rgba(201,168,76,0.05)] border border-[rgba(201,168,76,0.12)]">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-            <span className="text-[#c9a84c] text-[11px] font-semibold tracking-wide">Gold Access</span>
+      {/* Gold status footer */}
+      <div className="px-3 pb-4 border-t border-[rgba(255,255,255,0.055)] pt-3">
+        <div className="relative overflow-hidden px-3.5 py-3 rounded-xl bg-[rgba(201,168,76,0.05)] border border-[rgba(201,168,76,0.14)]">
+          {/* Shimmer sweep */}
+          <div className="absolute inset-0 shimmer pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+              <span className="text-[#c9a84c] text-[11px] font-semibold tracking-wide">Gold Access</span>
+            </div>
+            <p className="text-[#5a5a66] text-[11px] leading-relaxed">
+              Free briefings available now. Premium access coming soon.
+            </p>
           </div>
-          <p className="text-[#5a5a66] text-[11px] leading-relaxed">
-            Premium access is coming soon. Free briefings are available now.
-          </p>
         </div>
       </div>
     </div>
@@ -135,15 +141,22 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 shrink-0 bg-[#0d0d0f] border-r border-[rgba(255,255,255,0.06)] h-screen sticky top-0">
+      <aside className="hidden lg:flex flex-col w-[232px] shrink-0 h-screen sticky top-0"
+        style={{ background: 'rgba(10,10,11,0.95)', borderRight: '1px solid rgba(255,255,255,0.055)' }}
+      >
         <SidebarContent />
       </aside>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onMobileClose} />
-          <aside className="relative z-10 flex flex-col w-64 bg-[#0d0d0f] border-r border-[rgba(255,255,255,0.06)] h-full">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={onMobileClose}
+          />
+          <aside className="relative z-10 flex flex-col w-64 h-full"
+            style={{ background: 'rgba(10,10,11,0.98)', borderRight: '1px solid rgba(255,255,255,0.07)' }}
+          >
             <SidebarContent />
           </aside>
         </div>

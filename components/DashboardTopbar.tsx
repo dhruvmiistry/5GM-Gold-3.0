@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Menu, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react'
 
@@ -13,84 +14,133 @@ interface DashboardTopbarProps {
 export default function DashboardTopbar({ onMenuToggle, title }: DashboardTopbarProps) {
   const { user, logout } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    if (userMenuOpen) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [userMenuOpen])
 
   return (
-    <header className="h-14 border-b border-[rgba(255,255,255,0.06)] bg-[#0d0d0f]/80 backdrop-blur-md flex items-center justify-between px-5 sticky top-0 z-30">
+    <header
+      className="h-[52px] flex items-center justify-between px-5 sticky top-0 z-30"
+      style={{
+        background: 'rgba(10,10,11,0.82)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.055)',
+        boxShadow: '0 1px 0 rgba(255,255,255,0.03)',
+      }}
+    >
+      {/* Left */}
       <div className="flex items-center gap-3">
-        {/* Mobile hamburger */}
         <button
           onClick={onMenuToggle}
-          className="lg:hidden p-1.5 rounded-lg text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.05)] transition-all"
+          className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all"
         >
-          <Menu size={18} />
+          <Menu size={17} />
         </button>
-
         {title && (
-          <h1 className="text-white font-medium text-sm hidden sm:block">{title}</h1>
+          <h1 className="text-white font-medium text-sm hidden sm:block tracking-tight">{title}</h1>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.05)] transition-all">
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#c9a84c]" />
+      {/* Right */}
+      <div className="flex items-center gap-1.5">
+
+        {/* Bell */}
+        <button className="relative w-8 h-8 rounded-lg flex items-center justify-center text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all">
+          <Bell size={15} strokeWidth={1.75} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
         </button>
 
         {/* User menu */}
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-all"
+            onClick={() => setUserMenuOpen(v => !v)}
+            className="flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 rounded-xl hover:bg-[rgba(255,255,255,0.055)] transition-all group"
           >
-            <div className="w-6 h-6 rounded-full bg-[rgba(201,168,76,0.1)] border border-[rgba(201,168,76,0.2)] flex items-center justify-center">
-              <span className="text-[#c9a84c] text-[10px] font-semibold">
+            {/* Avatar */}
+            <div className="w-7 h-7 rounded-full bg-[rgba(201,168,76,0.1)] border border-[rgba(201,168,76,0.25)] flex items-center justify-center shrink-0 group-hover:border-[rgba(201,168,76,0.4)] transition-all">
+              <span className="text-[#c9a84c] text-[10px] font-bold tracking-wide">
                 {user?.name?.[0]?.toUpperCase() ?? 'U'}
               </span>
             </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-white text-xs font-medium leading-none">{user?.name ?? 'Trader'}</p>
-              <p className="text-[#5a5a66] text-[10px] leading-none mt-0.5">Free Member</p>
+
+            {/* Name */}
+            <div className="hidden sm:block text-left leading-tight">
+              <p className="text-white text-xs font-medium">{user?.name ?? 'Trader'}</p>
+              <p className="text-[#5a5a66] text-[10px]">Free Member</p>
             </div>
-            <ChevronDown size={13} className="text-[#5a5a66]" />
+
+            <ChevronDown
+              size={12}
+              strokeWidth={2}
+              className={`text-[#5a5a66] transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
+            />
           </button>
 
-          {userMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-[#111113] border border-[rgba(255,255,255,0.08)] shadow-xl shadow-black/50 overflow-hidden z-50">
-              <div className="p-3 border-b border-[rgba(255,255,255,0.06)]">
-                <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-                <p className="text-[#5a5a66] text-xs truncate">{user?.email}</p>
-                <span className="inline-block mt-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[rgba(201,168,76,0.08)] text-[#c9a84c] border border-[rgba(201,168,76,0.2)]">
-                  Free Member
-                </span>
-              </div>
-              <div className="p-1.5">
-                <Link
-                  href="/dashboard/settings"
-                  onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.04)] text-sm transition-all"
-                >
-                  <Settings size={14} />
-                  Settings
-                </Link>
-                <Link
-                  href="/"
-                  onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.04)] text-sm transition-all"
-                >
-                  <User size={14} />
-                  Public Site
-                </Link>
-                <button
-                  onClick={() => { setUserMenuOpen(false); logout() }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#e85757] hover:bg-[rgba(232,87,87,0.06)] text-sm transition-all"
-                >
-                  <LogOut size={14} />
-                  Sign out
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Dropdown */}
+          <AnimatePresence>
+            {userMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
+                className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden z-50"
+                style={{
+                  background: 'rgba(15,15,17,0.98)',
+                  border: '1px solid rgba(255,255,255,0.09)',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4)',
+                  backdropFilter: 'blur(24px)',
+                }}
+              >
+                {/* Profile info */}
+                <div className="px-4 py-3.5 border-b border-[rgba(255,255,255,0.07)]">
+                  <p className="text-white text-sm font-medium truncate">{user?.name}</p>
+                  <p className="text-[#5a5a66] text-xs truncate mt-0.5">{user?.email}</p>
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(201,168,76,0.09)] border border-[rgba(201,168,76,0.2)]">
+                    <span className="w-1 h-1 rounded-full bg-[#c9a84c]" />
+                    <span className="text-[10px] text-[#c9a84c] font-semibold tracking-wide">Free Member</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="p-1.5">
+                  {[
+                    { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
+                    { href: '/', icon: User, label: 'Public Site' },
+                  ].map(item => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.05)] text-sm transition-all"
+                    >
+                      <item.icon size={13} strokeWidth={1.75} />
+                      {item.label}
+                    </Link>
+                  ))}
+
+                  <div className="my-1 h-px bg-[rgba(255,255,255,0.06)]" />
+
+                  <button
+                    onClick={() => { setUserMenuOpen(false); logout() }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[rgba(232,87,87,0.8)] hover:text-[#e85757] hover:bg-[rgba(232,87,87,0.07)] text-sm transition-all"
+                  >
+                    <LogOut size={13} strokeWidth={1.75} />
+                    Sign out
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

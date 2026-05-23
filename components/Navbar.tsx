@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
 import { Menu, X } from 'lucide-react'
 
@@ -19,14 +20,8 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-dark border-b border-[rgba(255,255,255,0.06)]">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.25)] flex items-center justify-center">
-            <span className="text-[#c9a84c] font-bold text-sm">5G</span>
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-white font-semibold text-sm tracking-wide">5GM</span>
-            <span className="text-[#c9a84c] text-[10px] font-medium tracking-[0.15em] uppercase">Gold</span>
-          </div>
+        <Link href="/" className="flex items-center">
+          <Image src="/logo.png" alt="5GM Gold" width={120} height={40} className="h-8 w-auto object-contain" priority />
         </Link>
 
         {/* Desktop nav */}

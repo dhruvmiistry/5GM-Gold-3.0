@@ -141,7 +141,7 @@ export const mockTeam: TeamMember[] = [
     role: 'Lead Strategist',
     bio: 'Specialist in macro market structure and Gold/DXY correlation. Eight years of professional trading experience with a focus on high time frame narrative.',
     specialty: ['Gold', 'DXY', 'Macro'],
-    image: null,
+    image: '/mentor3.png',
   },
   {
     id: '2',
@@ -259,12 +259,12 @@ export const mockDashboardStats: DashboardStat[] = [
 ]
 
 export const mockMarketBreakdowns: Video[] = [
-  { id: 'mb1', title: 'Gold — May Structure Analysis', trader: 'Trader One', date: '2026-05-22', free: true, duration: 1240, category: 'Commodities', description: 'Full breakdown of Gold structure heading into the second half of May.', views: 3210, thumbnail: null, releaseDate: '2026-05-22' },
-  { id: 'mb2', title: 'EUR/USD — Weekly Bias', trader: 'Trader Three', date: '2026-05-21', free: true, duration: 980, category: 'FX Majors', description: 'Euro dollar narrative and key levels for the week.', views: 2104, thumbnail: null, releaseDate: '2026-05-21' },
-  { id: 'mb3', title: 'NASDAQ — Liquidity Raid Confirmed', trader: 'Trader Two', date: '2026-05-20', free: false, locked: true, duration: 1560, category: 'Indices', description: 'NASDAQ has confirmed a liquidity grab. Premium analysis with entry zones.', views: 0, thumbnail: null, releaseDate: '2026-05-20' },
-  { id: 'mb4', title: 'BTC — Macro Outlook', trader: 'Trader Four', date: '2026-05-19', free: false, locked: true, duration: 1100, category: 'Crypto', description: 'Bitcoin high time frame structure and macro correlation analysis.', views: 0, thumbnail: null, releaseDate: '2026-05-19' },
-  { id: 'mb5', title: 'GBP/JPY — Setup Review', trader: 'Trader Three', date: '2026-05-16', free: true, duration: 720, category: 'FX', description: "Review of last week's GBPJPY trade — entry, management, and lessons.", views: 1893, thumbnail: null, releaseDate: '2026-05-16' },
-  { id: 'mb6', title: 'S&P 500 — Institutional Flow', trader: 'Trader Two', date: '2026-05-15', free: false, locked: true, duration: 1890, category: 'Indices', description: 'Deep institutional order flow analysis for S&P 500.', views: 0, thumbnail: null, releaseDate: '2026-05-15' },
+  { id: 'mb1', title: 'Gold — May Structure Analysis', trader: 'Trader One', free: true, duration: 1240, category: 'Commodities', description: 'Full breakdown of Gold structure heading into the second half of May.', views: 3210, thumbnail: null, releaseDate: '2026-05-22' },
+  { id: 'mb2', title: 'EUR/USD — Weekly Bias', trader: 'Trader Three', free: true, duration: 980, category: 'FX Majors', description: 'Euro dollar narrative and key levels for the week.', views: 2104, thumbnail: null, releaseDate: '2026-05-21' },
+  { id: 'mb3', title: 'NASDAQ — Liquidity Raid Confirmed', trader: 'Trader Two', free: false, locked: true, duration: 1560, category: 'Indices', description: 'NASDAQ has confirmed a liquidity grab. Premium analysis with entry zones.', views: 0, thumbnail: null, releaseDate: '2026-05-20' },
+  { id: 'mb4', title: 'BTC — Macro Outlook', trader: 'Trader Four', free: false, locked: true, duration: 1100, category: 'Crypto', description: 'Bitcoin high time frame structure and macro correlation analysis.', views: 0, thumbnail: null, releaseDate: '2026-05-19' },
+  { id: 'mb5', title: 'GBP/JPY — Setup Review', trader: 'Trader Three', free: true, duration: 720, category: 'FX', description: "Review of last week's GBPJPY trade — entry, management, and lessons.", views: 1893, thumbnail: null, releaseDate: '2026-05-16' },
+  { id: 'mb6', title: 'S&P 500 — Institutional Flow', trader: 'Trader Two', free: false, locked: true, duration: 1890, category: 'Indices', description: 'Deep institutional order flow analysis for S&P 500.', views: 0, thumbnail: null, releaseDate: '2026-05-15' },
 ]
 
 export const mockRevisionMaterials = [

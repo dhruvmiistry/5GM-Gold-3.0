@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { TeamMember } from '@/lib/mockData'
 
 interface TeamCardProps {
@@ -18,10 +19,20 @@ export default function TeamCard({ member, index = 0 }: TeamCardProps) {
       className="group p-6 rounded-2xl card card-gold"
     >
       {/* Avatar */}
-      <div className="w-16 h-16 rounded-2xl bg-[rgba(201,168,76,0.06)] border border-[rgba(201,168,76,0.12)] flex items-center justify-center mb-5">
-        <span className="text-[#c9a84c] font-semibold text-xl">
-          {member.name.split(' ').map(w => w[0]).join('')}
-        </span>
+      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[rgba(201,168,76,0.06)] border border-[rgba(201,168,76,0.12)] flex items-center justify-center mb-5">
+        {member.image ? (
+          <Image
+            src={member.image}
+            alt={member.name}
+            width={64}
+            height={64}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="text-[#c9a84c] font-semibold text-xl">
+            {member.name.split(' ').map(w => w[0]).join('')}
+          </span>
+        )}
       </div>
 
       <div className="mb-4">
