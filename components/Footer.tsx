@@ -65,7 +65,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-            <span className="text-[#5a5a66] text-xs">Gold access coming soon</span>
+            <span className="text-[#5a5a66] text-xs">Gold tier launching soon</span>
           </div>
         </div>
       </div>

@@ -45,7 +45,7 @@ export default function DashboardPage() {
               <span style={{ color: '#c9a84c' }}>{user?.name?.split(' ')[0] ?? 'Trader'}</span>.
             </h1>
             <p className="text-[#5a5a66] text-sm mt-1.5">
-              This week inside 5GM Gold — three new free briefings available.
+              Your analyst briefings are live. Three new briefings available this week.
             </p>
           </motion.div>
 
@@ -300,11 +300,11 @@ export default function DashboardPage() {
                 </div>
 
                 <p className="text-[#5a5a66] text-sm leading-relaxed mb-5 max-w-xs mx-auto">
-                  Weekly Outlooks, Live Sessions, 8 course modules, Strategy Vault, and 1-to-1 mentorship.
+                  Weekly Outlooks, Live Sessions, Strategy Vault, 8 development modules, and private coaching.
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-2">
-                  {['Weekly Outlooks', 'Live Sessions', 'Modules', 'Strategy Vault', 'Mentorship'].map(f => (
+                  {['Weekly Outlooks', 'Live Sessions', 'Strategy Vault', 'Modules', 'Private Coaching'].map(f => (
                     <span
                       key={f}
                       className="text-[11px] text-[#8e8e9a] px-2.5 py-1 rounded-full"

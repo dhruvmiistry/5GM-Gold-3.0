@@ -21,8 +21,11 @@ export default function FeatureCard({ icon: Icon, title, description, locked = f
       className="group relative p-6 rounded-2xl card card-gold cursor-default"
     >
       {locked && (
-        <div className="absolute top-4 right-4">
-          <span className="text-[10px] text-[#5a5a66] border border-[rgba(255,255,255,0.06)] px-2 py-0.5 rounded-full">Gold</span>
+        <div className="absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full"
+          style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.16)' }}
+        >
+          <span className="w-1 h-1 rounded-full bg-[#c9a84c] opacity-60" />
+          <span className="text-[9px] text-[#c9a84c] font-medium tracking-widest uppercase">Gold</span>
         </div>
       )}
 

@@ -168,9 +168,11 @@ body {
 /* ── Hero background ───────────────────────────────────── */
 .hero-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 80% 0%, rgba(201, 168, 76, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 20% 100%, rgba(201, 168, 76, 0.03) 0%, transparent 50%),
-    var(--background);
+    radial-gradient(ellipse 55% 80% at 95% 5%, rgba(201, 168, 76, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 35% 55% at 72% 45%, rgba(201, 168, 76, 0.09) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 5% 95%, rgba(201, 168, 76, 0.05) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(6, 6, 8, 0.95) 0%, transparent 65%),
+    linear-gradient(135deg, #090909 0%, #0a0a0b 45%, #0c0b09 100%);
 }
 
 /* ── Dashboard page background ─────────────────────────── */

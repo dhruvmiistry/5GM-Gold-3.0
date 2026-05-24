@@ -58,7 +58,7 @@ export default function Navbar() {
                 href="/signup"
                 className="px-4 py-2 rounded-lg bg-[#c9a84c] text-black text-sm font-semibold hover:bg-[#e8c96d] transition-all"
               >
-                Join Free Access
+                Enter Platform
               </Link>
             </>
           )}
@@ -94,7 +94,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/login" onClick={() => setOpen(false)} className="px-4 py-3 text-center text-sm text-[#8e8e9a] border border-[rgba(255,255,255,0.08)] rounded-lg">Sign in</Link>
-                <Link href="/signup" onClick={() => setOpen(false)} className="px-4 py-3 text-center rounded-lg bg-[#c9a84c] text-black text-sm font-semibold">Join Free Access</Link>
+                <Link href="/signup" onClick={() => setOpen(false)} className="px-4 py-3 text-center rounded-lg bg-[#c9a84c] text-black text-sm font-semibold">Enter Platform</Link>
               </>
             )}
           </div>

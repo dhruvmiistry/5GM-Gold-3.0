@@ -10,12 +10,12 @@ import CTASection from '@/components/CTASection'
 import { mockTeam } from '@/lib/mockData'
 
 const features = [
-  { icon: TrendingUp, title: 'Weekly Outlooks', description: 'Full team analysis of key markets every week. Know the narrative before the move.', locked: true },
-  { icon: Radio, title: 'Private Mentorship', description: 'One-to-one sessions with experienced traders. Tailored guidance for your development.', locked: true },
-  { icon: Eye, title: 'Live Sessions', description: 'Join the live trading room. Watch professional traders work in real time.', locked: true },
-  { icon: Shield, title: 'Strategy Vault', description: 'Complete playbooks, execution models, and trade frameworks from the full team.', locked: true },
-  { icon: BarChart2, title: 'Market Breakdowns', description: 'Detailed analysis of individual instruments. Free and premium content every week.', locked: false },
-  { icon: BookOpen, title: 'Trader Development', description: 'Structured courses from foundations to funded trader execution. Eight complete modules.', locked: true },
+  { icon: TrendingUp, title: 'Weekly Outlooks', description: 'Full analyst coverage of key markets every Monday. Know the narrative before the move.', locked: true },
+  { icon: Radio, title: 'Private Coaching', description: 'One-to-one sessions with 5GM analysts. Private advisory tailored to your trading.', locked: true },
+  { icon: Eye, title: 'Live Sessions', description: 'Access the live briefing room. Watch 5GM analysts work through market structure in real time.', locked: true },
+  { icon: Shield, title: 'Strategy Vault', description: 'Complete playbooks, execution models, and trade frameworks from the full analyst team.', locked: true },
+  { icon: BarChart2, title: 'Market Breakdowns', description: 'Detailed analysis of individual instruments. Free content available weekly.', locked: false },
+  { icon: BookOpen, title: 'Development Modules', description: 'Eight structured modules from market foundations to professional execution standards.', locked: true },
 ]
 
 export default function HomePage() {
@@ -31,10 +31,12 @@ export default function HomePage() {
         <div className="text-center mb-16">
           <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Platform</p>
           <h2 className="text-4xl md:text-5xl font-light text-white mb-5">
-            Everything a serious trader needs.
+            One private ecosystem.
+            <br />
+            <span className="text-gold-gradient">Built for serious traders.</span>
           </h2>
           <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
-            Five instruments of professional development — from free weekly briefings to a complete private trading platform.
+            Free weekly analyst briefings — with a full private trading platform behind Gold access.
           </p>
         </div>
 
@@ -52,22 +54,22 @@ export default function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(201,168,76,0.08)] border border-[rgba(201,168,76,0.2)] mb-6">
                 <Zap size={12} className="text-[#c9a84c]" />
-                <span className="text-[#c9a84c] text-xs font-medium tracking-wide">Free Weekly Content</span>
+                <span className="text-[#c9a84c] text-xs font-medium tracking-wide">Weekly Intelligence</span>
               </div>
               <h2 className="text-4xl font-light text-white mb-6 leading-tight">
-                3 free briefings
+                Three analyst briefings.
                 <br />
-                <span className="text-gold-gradient">every single week.</span>
+                <span className="text-gold-gradient">Every week.</span>
               </h2>
               <p className="text-[#8e8e9a] text-base leading-relaxed mb-8">
-                Create a free account and access three new briefings every week from our team of four traders. Weekly outlooks, market breakdowns, and psychology sessions — completely free.
+                Access three new analyst briefings every week from the 5GM team. Weekly outlooks, market breakdowns, and trader psychology — inside the platform, free.
               </p>
               <ul className="space-y-3 mb-8">
                 {[
-                  'New content released every week',
-                  'Covered by four specialist traders',
-                  'Weekly Outlooks, Breakdowns, and Psychology',
-                  'No pricing. Free account access only.',
+                  'Fresh briefings released each week',
+                  'Four analysts covering different instruments',
+                  'Outlooks, breakdowns, and psychology',
+                  'No pricing. Platform access is free.',
                 ].map(item => (
                   <li key={item} className="flex items-center gap-3 text-sm text-[#8e8e9a]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] shrink-0" />
@@ -77,10 +79,10 @@ export default function HomePage() {
               </ul>
               <div className="flex items-center gap-4">
                 <a href="/signup" className="px-6 py-3 rounded-xl bg-[#c9a84c] text-black font-semibold text-sm hover:bg-[#e8c96d] transition-all">
-                  Create Free Account
+                  Enter Platform
                 </a>
                 <a href="/dashboard/free-briefings" className="text-sm text-[#8e8e9a] hover:text-white transition-colors">
-                  Browse briefings →
+                  View briefings →
                 </a>
               </div>
             </div>
@@ -114,14 +116,14 @@ export default function HomePage() {
       <section className="py-24 px-6 border-t border-[rgba(255,255,255,0.06)]" id="team">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Team</p>
+            <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Analysts</p>
             <h2 className="text-4xl md:text-5xl font-light text-white mb-5">
-              Watch the market through the lens
+              Four analysts.
               <br />
-              <span className="text-gold-gradient">of professional traders.</span>
+              <span className="text-gold-gradient">One private platform.</span>
             </h2>
             <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
-              Four specialists. Four perspectives. One private platform.
+              Each analyst covers distinct instruments and market structures. Collectively — one ecosystem.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -182,8 +184,8 @@ export default function HomePage() {
 
       <CTASection
         badge="Free Access"
-        title="Start watching. Free."
-        subtitle="No pricing. No obligation. Create a free account and access weekly briefings from four professional traders."
+        title="Enter the platform. Free."
+        subtitle="No pricing. No obligation. Access weekly analyst briefings from inside the 5GM private platform."
         primaryLabel="Create Free Account"
         primaryHref="/signup"
         secondaryLabel="Sign In"
