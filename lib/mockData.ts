@@ -19,6 +19,14 @@ export interface TeamMember {
   bio: string
   specialty: string[]
   image: string | null
+  imagePosition?: string
+  imageScale?: number
+  socials?: {
+    instagram?: string
+    twitter?: string
+    youtube?: string
+    tiktok?: string
+  }
 }
 
 export interface Module {
@@ -136,36 +144,64 @@ export const mockFreeVideos: Video[] = [
 
 export const mockTeam: TeamMember[] = [
   {
-    id: '1',
-    name: 'Trader One',
-    role: 'Lead Strategist',
-    bio: 'Specialist in macro market structure and Gold/DXY correlation. Eight years of professional trading experience with a focus on high time frame narrative.',
-    specialty: ['Gold', 'DXY', 'Macro'],
+    id: '3',
+    name: 'Bani',
+    role: 'Founder & Lead Strategist',
+    bio: 'Deep expertise in forex pairs with a focus on psychology, funded account performance, and consistent execution under pressure.',
+    specialty: ['EUR/USD', 'GBP/JPY', 'Psychology'],
     image: '/mentor3.png',
+    imagePosition: '20% top',
+    socials: {
+      instagram: 'https://www.instagram.com/tradebani/',
+      youtube: 'https://www.youtube.com/@tradebani',
+      tiktok: 'https://www.tiktok.com/@tradebani',
+      twitter: 'https://x.com/tradebani',
+    },
   },
   {
     id: '2',
-    name: 'Trader Two',
-    role: 'Senior Analyst',
+    name: 'Albin',
+    role: 'Senior Analyst & Mentor',
     bio: 'Focuses on equity indices and high-probability liquidity setups. Known for clean, systematic execution across NASDAQ and S&P futures.',
     specialty: ['NASDAQ', 'S&P 500', 'Indices'],
-    image: null,
+    image: '/mentor2.png',
+    socials: {
+      instagram: 'https://www.instagram.com/abtradingg/',
+      twitter: 'https://x.com/ABTradingg',
+      youtube: 'https://www.youtube.com/@ABTradingg',
+      tiktok: 'https://www.tiktok.com/@abtradings',
+    },
   },
   {
-    id: '3',
-    name: 'Trader Three',
-    role: 'FX Specialist',
-    bio: 'Deep expertise in forex pairs with a focus on psychology, funded account performance, and consistent execution under pressure.',
-    specialty: ['EUR/USD', 'GBP/JPY', 'Psychology'],
-    image: null,
+    id: '1',
+    name: 'Ibby',
+    role: 'Funded Trader & Strategist',
+    bio: 'Specialist in macro market structure and Gold/DXY correlation. Eight years of professional trading experience with a focus on high time frame narrative.',
+    specialty: ['Gold', 'DXY', 'Macro'],
+    image: '/mentor1.png',
+    imagePosition: '35% 0%',
+    imageScale: 1.15,
+    socials: {
+      instagram: 'https://instagram.com/',
+      tiktok: 'https://www.tiktok.com/@ibby5gm',
+      youtube: 'https://www.youtube.com/@Ibby5GM',
+    },
   },
   {
     id: '4',
-    name: 'Trader Four',
-    role: 'Risk & Execution',
+    name: 'Mubz',
+    role: 'Funded Trader & Mentor',
     bio: 'Risk management expert specialising in funded account strategies, position sizing models, and long-term capital preservation.',
     specialty: ['Risk Management', 'Funding', 'Execution'],
-    image: null,
+    image: '/mentor4.png',
+    imagePosition: '80% top',
+    imageScale: 1.15,
+    socials: {
+      instagram: 'https://www.instagram.com/trademubz/',
+      twitter: 'https://x.com/TradeMubz',
+      tiktok: 'https://www.tiktok.com/@trademubz',
+      youtube: 'https://www.youtube.com/@TradeMubz',
+    },
   },
 ]
 

@@ -38,9 +38,11 @@ export default function CTASection({ title, subtitle, primaryLabel, primaryHref,
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-light text-white leading-tight mb-5"
+          className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6"
         >
-          {title}
+          <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Enter the platform.</span>
+          <br />
+          <span className="font-display italic text-gold-gradient">Free.</span>
         </motion.h2>
 
         <motion.p

@@ -56,7 +56,7 @@ export default function HeroSection() {
               className="text-[#8e8e9a] text-lg font-light leading-relaxed max-w-lg mb-10"
             >
               Built for traders serious about refinement, discipline, and execution.
-              Three analyst briefings every week. Gold tier launching soon.
+              Three free analyst videos every week. Gold tier launching soon.
             </motion.p>
 
             <motion.div
@@ -73,11 +73,11 @@ export default function HeroSection() {
                 <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
-                href="/dashboard/free-briefings"
+                href="/dashboard/free-videos"
                 className="group flex items-center gap-2 px-8 py-4 rounded-xl border border-[rgba(255,255,255,0.1)] text-white text-sm font-medium hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.03)] transition-all"
               >
                 <Play size={14} className="text-[#c9a84c]" />
-                Watch Latest Briefing
+                Watch Latest Video
               </Link>
             </motion.div>
 
@@ -161,7 +161,7 @@ export default function HeroSection() {
                 </div>
                 <div>
                   <div className="text-white text-xs font-medium">4 traders. Free access.</div>
-                  <div className="text-[#5a5a66] text-[10px]">3 new briefings every week</div>
+                  <div className="text-[#5a5a66] text-[10px]">3 new videos every week</div>
                 </div>
               </div>
             </motion.div>

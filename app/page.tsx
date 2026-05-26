@@ -12,7 +12,7 @@ import { mockTeam } from '@/lib/mockData'
 const features = [
   { icon: TrendingUp, title: 'Weekly Outlooks', description: 'Full analyst coverage of key markets every Monday. Know the narrative before the move.', locked: true },
   { icon: Radio, title: 'Private Coaching', description: 'One-to-one sessions with 5GM analysts. Private advisory tailored to your trading.', locked: true },
-  { icon: Eye, title: 'Live Sessions', description: 'Access the live briefing room. Watch 5GM analysts work through market structure in real time.', locked: true },
+  { icon: Eye, title: 'Live Sessions', description: 'Access the live trading room. Watch 5GM analysts work through market structure in real time.', locked: true },
   { icon: Shield, title: 'Strategy Vault', description: 'Complete playbooks, execution models, and trade frameworks from the full analyst team.', locked: true },
   { icon: BarChart2, title: 'Market Breakdowns', description: 'Detailed analysis of individual instruments. Free content available weekly.', locked: false },
   { icon: BookOpen, title: 'Development Modules', description: 'Eight structured modules from market foundations to professional execution standards.', locked: true },
@@ -30,13 +30,13 @@ export default function HomePage() {
       <section className="py-24 px-6 max-w-7xl mx-auto" id="platform">
         <div className="text-center mb-16">
           <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Platform</p>
-          <h2 className="text-4xl md:text-5xl font-light text-white mb-5">
-            One private ecosystem.
+          <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
+            <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>One private ecosystem.</span>
             <br />
-            <span className="text-gold-gradient">Built for serious traders.</span>
+            <span className="font-display italic text-gold-gradient">Built for serious traders.</span>
           </h2>
           <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
-            Free weekly analyst briefings — with a full private trading platform behind Gold access.
+            Free weekly analyst videos — with a full private trading platform behind Gold access.
           </p>
         </div>
 
@@ -56,17 +56,17 @@ export default function HomePage() {
                 <Zap size={12} className="text-[#c9a84c]" />
                 <span className="text-[#c9a84c] text-xs font-medium tracking-wide">Weekly Intelligence</span>
               </div>
-              <h2 className="text-4xl font-light text-white mb-6 leading-tight">
-                Three analyst briefings.
+              <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
+                <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Three free videos.</span>
                 <br />
-                <span className="text-gold-gradient">Every week.</span>
+                <span className="font-display italic text-gold-gradient">Every week.</span>
               </h2>
               <p className="text-[#8e8e9a] text-base leading-relaxed mb-8">
-                Access three new analyst briefings every week from the 5GM team. Weekly outlooks, market breakdowns, and trader psychology — inside the platform, free.
+                Access three new analyst videos every week from the 5GM team. Weekly outlooks, market breakdowns, and trader psychology — inside the platform, free.
               </p>
               <ul className="space-y-3 mb-8">
                 {[
-                  'Fresh briefings released each week',
+                  'Fresh videos released each week',
                   'Four analysts covering different instruments',
                   'Outlooks, breakdowns, and psychology',
                   'No pricing. Platform access is free.',
@@ -81,8 +81,8 @@ export default function HomePage() {
                 <a href="/signup" className="px-6 py-3 rounded-xl bg-[#c9a84c] text-black font-semibold text-sm hover:bg-[#e8c96d] transition-all">
                   Enter Platform
                 </a>
-                <a href="/dashboard/free-briefings" className="text-sm text-[#8e8e9a] hover:text-white transition-colors">
-                  View briefings →
+                <a href="/dashboard/free-videos" className="text-sm text-[#8e8e9a] hover:text-white transition-colors">
+                  View videos →
                 </a>
               </div>
             </div>
@@ -117,16 +117,16 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Analysts</p>
-            <h2 className="text-4xl md:text-5xl font-light text-white mb-5">
-              Four analysts.
+            <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Four analysts.</span>
               <br />
-              <span className="text-gold-gradient">One private platform.</span>
+              <span className="font-display italic text-gold-gradient">One private platform.</span>
             </h2>
             <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
               Each analyst covers distinct instruments and market structures. Collectively — one ecosystem.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {mockTeam.map((member, i) => (
               <TeamCard key={member.id} member={member} index={i} />
             ))}
@@ -134,58 +134,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Platform preview */}
-      <section className="py-24 px-6 border-t border-[rgba(255,255,255,0.06)] bg-[#0d0d0f]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">Dashboard</p>
-            <h2 className="text-4xl font-light text-white mb-5">Step inside the 5GM Gold platform.</h2>
-            <p className="text-[#8e8e9a] text-base font-light max-w-lg mx-auto">
-              A premium trading environment. Not a course site. Not a social feed. A private terminal.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-[rgba(255,255,255,0.07)] overflow-hidden bg-[#0a0a0b] shadow-2xl">
-            <div className="h-10 bg-[#0d0d0f] border-b border-[rgba(255,255,255,0.06)] flex items-center px-4 gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
-              </div>
-              <div className="flex-1 mx-4 h-5 bg-[rgba(255,255,255,0.04)] rounded-md" />
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                {['Free Briefings', 'Gold Modules', 'Live Sessions', 'Breakdowns'].map((label, i) => (
-                  <div key={label} className="p-3 rounded-xl bg-[#111113] border border-[rgba(255,255,255,0.06)]">
-                    <div className="text-[#5a5a66] text-[10px] mb-1 uppercase tracking-wide">{label}</div>
-                    <div className={`text-lg font-semibold ${i === 0 || i === 3 ? 'text-white' : 'text-[#5a5a66]'}`}>
-                      {['24', '—', '—', '18'][i]}
-                    </div>
-                    {i > 0 && i < 3 && <div className="text-[9px] text-[#c9a84c] mt-0.5">Gold required</div>}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="rounded-xl border border-[rgba(255,255,255,0.06)] p-4">
-                    <div className="aspect-video rounded-lg mb-3 flex items-center justify-center bg-[rgba(201,168,76,0.03)]">
-                      {i === 0 ? <Eye size={18} className="text-[#c9a84c] opacity-30" /> : <Shield size={16} className="text-[#5a5a66] opacity-30" />}
-                    </div>
-                    <div className="h-2.5 rounded-full bg-[rgba(255,255,255,0.06)] w-3/4 mb-1.5" />
-                    <div className="h-2 rounded-full bg-[rgba(255,255,255,0.04)] w-1/2" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <CTASection
         badge="Free Access"
         title="Enter the platform. Free."
-        subtitle="No pricing. No obligation. Access weekly analyst briefings from inside the 5GM private platform."
+        subtitle="No pricing. No obligation. Access weekly analyst videos from inside the 5GM private platform."
         primaryLabel="Create Free Account"
         primaryHref="/signup"
         secondaryLabel="Sign In"

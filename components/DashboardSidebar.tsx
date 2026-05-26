@@ -29,7 +29,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard',         href: '/dashboard',                    icon: LayoutDashboard, locked: false },
-  { label: 'Free Briefings',    href: '/dashboard/free-briefings',     icon: Play,            locked: false, badge: 'New' },
+  { label: 'Free Videos',       href: '/dashboard/free-videos',        icon: Play,            locked: false, badge: 'New' },
   { label: 'Weekly Outlooks',   href: '/dashboard/weekly-outlooks',    icon: TrendingUp,      locked: true },
   { label: 'Live Sessions',     href: '/dashboard/live-sessions',      icon: Radio,           locked: true },
   { label: 'Gold Modules',      href: '/dashboard/gold-modules',       icon: BookOpen,        locked: true },
@@ -130,7 +130,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
               <span className="text-[#c9a84c] text-[11px] font-semibold tracking-wide">Gold Access</span>
             </div>
             <p className="text-[#5a5a66] text-[11px] leading-relaxed">
-              Free briefings available now. Premium access coming soon.
+              Free videos available now. Premium access coming soon.
             </p>
           </div>
         </div>

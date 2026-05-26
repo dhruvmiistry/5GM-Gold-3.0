@@ -21,7 +21,7 @@ export default function Footer() {
             <h4 className="text-[#8e8e9a] text-xs font-semibold uppercase tracking-wider mb-4">Platform</h4>
             <ul className="space-y-3">
               {[
-                { label: 'Free Briefings', href: '/free-access' },
+                { label: 'Free Videos', href: '/free-access' },
                 { label: 'Dashboard', href: '/dashboard' },
                 { label: 'Login', href: '/login' },
                 { label: 'Join Free', href: '/signup' },
@@ -63,9 +63,18 @@ export default function Footer() {
           <p className="text-[#5a5a66] text-xs">
             © 2026 5GM Gold. All rights reserved.
           </p>
-          <div className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-            <span className="text-[#5a5a66] text-xs">Gold tier launching soon</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+              <span className="text-[#5a5a66] text-xs">Gold tier launching soon</span>
+            </div>
+            <Image
+              src="/pbw.png"
+              alt="Powered by WebPlug"
+              width={72}
+              height={20}
+              className="h-4 w-auto object-contain opacity-30 hover:opacity-55 transition-opacity duration-300"
+            />
           </div>
         </div>
       </div>
