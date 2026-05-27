@@ -14,6 +14,8 @@ export interface User {
   experience: string     // maps to trading_experience
   joinedDate: string     // maps to created_at
   avatar_url?: string | null
+  email_consent?: boolean
+  marketing_opt_in?: boolean
 }
 
 interface AuthContextType {
@@ -64,6 +66,8 @@ function profileToUser(profile: any, email: string): User {
     experience: profile.trading_experience ?? '',
     joinedDate: profile.created_at ?? new Date().toISOString(),
     avatar_url: profile.avatar_url ?? null,
+    email_consent: profile.email_consent ?? false,
+    marketing_opt_in: profile.marketing_opt_in ?? false,
   }
 }
 
