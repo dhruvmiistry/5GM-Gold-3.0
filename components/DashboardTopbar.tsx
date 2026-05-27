@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
-import { Menu, Bell, ChevronDown, LogOut, Settings, User } from 'lucide-react'
+import { Menu, Bell, ChevronDown, LogOut, Settings, User, ShieldCheck } from 'lucide-react'
 
 interface DashboardTopbarProps {
   onMenuToggle?: () => void
@@ -75,7 +75,9 @@ export default function DashboardTopbar({ onMenuToggle, title }: DashboardTopbar
             {/* Name */}
             <div className="hidden sm:block text-left leading-tight">
               <p className="text-white text-xs font-medium">{user?.name ?? 'Trader'}</p>
-              <p className="text-[#5a5a66] text-[10px]">Free Member</p>
+              <p className="text-[10px]" style={{ color: user?.role === 'admin' ? '#c9a84c' : user?.plan === 'gold' ? '#c9a84c' : '#5a5a66' }}>
+                {user?.role === 'admin' ? 'Admin' : user?.plan === 'gold' ? 'Gold Member' : 'Free Member'}
+              </p>
             </div>
 
             <ChevronDown
@@ -107,13 +109,16 @@ export default function DashboardTopbar({ onMenuToggle, title }: DashboardTopbar
                   <p className="text-[#5a5a66] text-xs truncate mt-0.5">{user?.email}</p>
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[rgba(201,168,76,0.09)] border border-[rgba(201,168,76,0.2)]">
                     <span className="w-1 h-1 rounded-full bg-[#c9a84c]" />
-                    <span className="text-[10px] text-[#c9a84c] font-semibold tracking-wide">Free Member</span>
+                    <span className="text-[10px] text-[#c9a84c] font-semibold tracking-wide">
+                      {user?.role === 'admin' ? 'Admin' : user?.plan === 'gold' ? 'Gold Member' : 'Free Member'}
+                    </span>
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="p-1.5">
                   {[
+                    ...(user?.role === 'admin' ? [{ href: '/admin', icon: ShieldCheck, label: 'Admin Portal' }] : []),
                     { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
                     { href: '/', icon: User, label: 'Public Site' },
                   ].map(item => (

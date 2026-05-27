@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import {
   LayoutDashboard,
   Play,
@@ -17,6 +18,7 @@ import {
   Lock,
   ChevronRight,
   X,
+  ShieldCheck,
 } from 'lucide-react'
 
 interface NavItem {
@@ -47,6 +49,9 @@ interface DashboardSidebarProps {
 
 export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: DashboardSidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
+  const hasGoldAccess = user?.plan === 'gold' || user?.role === 'admin'
+  const isAdmin = user?.role === 'admin'
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -104,33 +109,61 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
             <p className="section-label">Gold Access</p>
             <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
           </div>
-          {navItems.filter(i => i.locked).map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onMobileClose}
-              className="sidebar-link locked-nav"
-            >
-              <item.icon size={15} strokeWidth={1.75} />
-              <span className="flex-1 font-medium">{item.label}</span>
-              <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
-            </Link>
-          ))}
+          {navItems.filter(i => i.locked).map(item => {
+            const isActive = pathname === item.href
+            const unlocked = hasGoldAccess
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onMobileClose}
+                className={`sidebar-link ${unlocked ? (isActive ? 'active' : '') : 'locked-nav'}`}
+              >
+                <item.icon size={15} strokeWidth={isActive ? 2 : 1.75} />
+                <span className="flex-1 font-medium">{item.label}</span>
+                {unlocked ? (
+                  isActive && <ChevronRight size={11} className="text-[#c9a84c] opacity-60" />
+                ) : (
+                  <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
+                )}
+              </Link>
+            )
+          })}
         </div>
+
+        {/* Admin Portal link */}
+        {isAdmin && (
+          <div className="mt-3">
+            <div className="my-1 mx-3 h-px bg-[rgba(255,255,255,0.055)]" />
+            <Link
+              href="/admin"
+              onClick={onMobileClose}
+              className={`sidebar-link mt-1 ${pathname.startsWith('/admin') ? 'active' : ''}`}
+            >
+              <ShieldCheck size={15} strokeWidth={1.75} />
+              <span className="flex-1 font-medium">Admin Portal</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
-      {/* Gold status footer */}
+      {/* Status footer */}
       <div className="px-3 pb-4 border-t border-[rgba(255,255,255,0.055)] pt-3">
         <div className="relative overflow-hidden px-3.5 py-3 rounded-xl bg-[rgba(201,168,76,0.05)] border border-[rgba(201,168,76,0.14)]">
-          {/* Shimmer sweep */}
           <div className="absolute inset-0 shimmer pointer-events-none" />
           <div className="relative">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-              <span className="text-[#c9a84c] text-[11px] font-semibold tracking-wide">Gold Access</span>
+              <span className="text-[#c9a84c] text-[11px] font-semibold tracking-wide">
+                {isAdmin ? 'Admin Access' : hasGoldAccess ? 'Gold Member' : 'Gold Access'}
+              </span>
             </div>
             <p className="text-[#5a5a66] text-[11px] leading-relaxed">
-              Free videos available now. Premium access coming soon.
+              {isAdmin
+                ? 'Full platform access. Admin portal enabled.'
+                : hasGoldAccess
+                ? 'Full Gold access unlocked.'
+                : 'Free videos available now. Premium access coming soon.'}
             </p>
           </div>
         </div>

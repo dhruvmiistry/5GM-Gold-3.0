@@ -5,11 +5,15 @@ import { useRouter } from 'next/navigation'
 
 export interface User {
   id: string
-  name: string
+  name: string           // maps to full_name
   email: string
-  accountType: 'free' | 'gold'
-  experience: string
-  joinedDate: string
+  role: 'member' | 'admin'
+  plan: 'free' | 'gold'
+  accountType: 'free' | 'gold'  // alias for plan — keeps existing components working
+  access_level: 'free' | 'gold'
+  experience: string     // maps to trading_experience
+  joinedDate: string     // maps to created_at
+  avatar_url?: string | null
 }
 
 interface AuthContextType {
@@ -18,63 +22,207 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (name: string, email: string, password: string, experience: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const STORAGE_KEY = '5gm_gold_user'
+const SUPABASE_CONFIGURED = !!(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+  !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
+)
+
+// ── Mock fallback (no Supabase env) ──────────────────────
+const MOCK_KEY = '5gm_gold_user'
+
+function mockUserFromData(data: { id: string; name: string; email: string; experience: string }): User {
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: 'member',
+    plan: 'free',
+    accountType: 'free',
+    access_level: 'free',
+    experience: data.experience,
+    joinedDate: new Date().toISOString(),
+  }
+}
+
+// ── Profile → User mapper ─────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function profileToUser(profile: any, email: string): User {
+  return {
+    id: profile.id,
+    name: profile.full_name || email.split('@')[0],
+    email: profile.email || email,
+    role: profile.role ?? 'member',
+    plan: profile.plan ?? 'free',
+    accountType: profile.plan ?? 'free',
+    access_level: profile.access_level ?? 'free',
+    experience: profile.trading_experience ?? '',
+    joinedDate: profile.created_at ?? new Date().toISOString(),
+    avatar_url: profile.avatar_url ?? null,
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
+  // ── Fetch profile from Supabase and set user ──────────
+  const fetchAndSetUser = async () => {
+    if (!SUPABASE_CONFIGURED) return
+
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setUser(JSON.parse(stored))
-    } catch {}
-    setIsLoading(false)
+      const { createClient } = await import('./supabase/client')
+      const supabase = createClient()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) { setUser(null); return }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+
+      if (profile) {
+        setUser(profileToUser(profile, authUser.email ?? ''))
+      }
+    } catch {
+      setUser(null)
+    }
+  }
+
+  useEffect(() => {
+    if (!SUPABASE_CONFIGURED) {
+      // Mock mode
+      try {
+        const stored = localStorage.getItem(MOCK_KEY)
+        if (stored) setUser(JSON.parse(stored))
+      } catch {}
+      setIsLoading(false)
+      return
+    }
+
+    // Supabase mode — hydrate from session
+    let mounted = true
+
+    const init = async () => {
+      try {
+        const { createClient } = await import('./supabase/client')
+        const supabase = createClient()
+
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user && mounted) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+          if (profile && mounted) setUser(profileToUser(profile, session.user.email ?? ''))
+        }
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          if (!mounted) return
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            if (profile) setUser(profileToUser(profile, session.user.email ?? ''))
+          } else {
+            setUser(null)
+          }
+        })
+
+        if (mounted) setIsLoading(false)
+        return () => subscription.unsubscribe()
+      } catch {
+        if (mounted) setIsLoading(false)
+      }
+    }
+
+    init()
+    return () => { mounted = false }
   }, [])
 
-  const login = async (email: string, _password: string) => {
-    await new Promise(r => setTimeout(r, 900))
-    const mockUser: User = {
-      id: 'usr_' + Math.random().toString(36).slice(2, 8),
-      name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      email,
-      accountType: 'free',
-      experience: 'intermediate',
-      joinedDate: new Date().toISOString(),
+  const login = async (email: string, password: string) => {
+    if (!SUPABASE_CONFIGURED) {
+      // Mock fallback
+      await new Promise(r => setTimeout(r, 700))
+      const mockUser = mockUserFromData({
+        id: 'usr_' + Math.random().toString(36).slice(2, 8),
+        name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        email,
+        experience: 'intermediate',
+      })
+      localStorage.setItem(MOCK_KEY, JSON.stringify(mockUser))
+      setUser(mockUser)
+      router.push('/dashboard')
+      return
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockUser))
-    setUser(mockUser)
+
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
+    await fetchAndSetUser()
     router.push('/dashboard')
   }
 
-  const signup = async (name: string, email: string, _password: string, experience: string) => {
-    await new Promise(r => setTimeout(r, 1100))
-    const mockUser: User = {
-      id: 'usr_' + Math.random().toString(36).slice(2, 8),
-      name,
-      email,
-      accountType: 'free',
-      experience,
-      joinedDate: new Date().toISOString(),
+  const signup = async (name: string, email: string, password: string, experience: string) => {
+    if (!SUPABASE_CONFIGURED) {
+      // Mock fallback
+      await new Promise(r => setTimeout(r, 900))
+      const mockUser = mockUserFromData({
+        id: 'usr_' + Math.random().toString(36).slice(2, 8),
+        name, email, experience,
+      })
+      localStorage.setItem(MOCK_KEY, JSON.stringify(mockUser))
+      setUser(mockUser)
+      router.push('/dashboard')
+      return
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockUser))
-    setUser(mockUser)
+
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name, trading_experience: experience, signup_source: 'web' },
+      },
+    })
+    if (error) throw new Error(error.message)
+    await fetchAndSetUser()
     router.push('/dashboard')
   }
 
-  const logout = () => {
-    localStorage.removeItem(STORAGE_KEY)
+  const logout = async () => {
+    if (!SUPABASE_CONFIGURED) {
+      localStorage.removeItem(MOCK_KEY)
+      setUser(null)
+      router.push('/')
+      return
+    }
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+    await supabase.auth.signOut()
     setUser(null)
     router.push('/')
   }
 
+  const refreshUser = async () => {
+    await fetchAndSetUser()
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

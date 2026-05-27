@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Play, TrendingUp } from 'lucide-react'
+import { ArrowRight, Play } from 'lucide-react'
 
 export default function HeroSection() {
   return (
@@ -112,8 +112,14 @@ export default function HeroSection() {
             transition={{ duration: 0.9, delay: 0.25 }}
             className="relative hidden lg:block"
           >
-            {/* Main image */}
-            <div className="relative rounded-2xl overflow-hidden border border-[rgba(201,168,76,0.18)] shadow-[0_0_0_1px_rgba(201,168,76,0.08),0_32px_80px_rgba(0,0,0,0.5),0_0_60px_rgba(201,168,76,0.07)]">
+            {/* outer ambient glow */}
+            <div className="absolute -inset-8 rounded-3xl pointer-events-none"
+              style={{ background: 'radial-gradient(ellipse 70% 60% at 60% 40%, rgba(201,168,76,0.1) 0%, transparent 70%)', filter: 'blur(20px)' }} />
+
+            {/* image frame */}
+            <div className="relative rounded-2xl overflow-hidden"
+              style={{ border: '1px solid rgba(201,168,76,0.22)', boxShadow: '0 0 0 1px rgba(201,168,76,0.07), 0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(201,168,76,0.08)' }}>
+
               <Image
                 src="/mentor3.png"
                 alt="5GM Gold Mentor"
@@ -121,50 +127,49 @@ export default function HeroSection() {
                 height={760}
                 className="w-full object-cover"
                 priority
+                style={{ filter: 'contrast(1.05) brightness(0.95)' }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[rgba(10,10,11,0.1)] to-transparent opacity-70" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] via-transparent to-transparent opacity-25" />
-            </div>
 
-            {/* Floating card — top right */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.65 }}
-              className="absolute -top-4 -right-5 px-4 py-3 rounded-xl glass border border-[rgba(201,168,76,0.2)] shadow-xl"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-[rgba(201,168,76,0.1)] flex items-center justify-center">
-                  <TrendingUp size={13} className="text-[#c9a84c]" />
-                </div>
-                <div>
-                  <div className="text-white text-xs font-semibold">Weekly Outlook</div>
-                  <div className="text-[#5a5a66] text-[10px]">New every Monday</div>
-                </div>
-              </div>
-            </motion.div>
+              {/* bottom fade to bg */}
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,10,11,1) 0%, rgba(10,10,11,0.4) 25%, transparent 60%)' }} />
+              {/* left fade to blend with text */}
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(10,10,11,0.35) 0%, transparent 35%)' }} />
+              {/* subtle gold tint at top */}
+              <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 40% at 70% 0%, rgba(201,168,76,0.07) 0%, transparent 60%)' }} />
 
-            {/* Floating card — bottom left */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.75 }}
-              className="absolute -bottom-4 -left-5 px-4 py-3 rounded-xl glass border border-[rgba(255,255,255,0.09)] shadow-xl"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-1.5">
-                  {['T1', 'T2', 'T3', 'T4'].map(t => (
-                    <div key={t} className="w-6 h-6 rounded-full bg-[rgba(201,168,76,0.12)] border-2 border-[#0d0d0f] flex items-center justify-center">
-                      <span className="text-[#c9a84c] text-[7px] font-bold">{t[1]}</span>
+              {/* top shimmer line */}
+              <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent 10%, rgba(201,168,76,0.5) 50%, transparent 90%)' }} />
+
+              {/* bottom floating badge */}
+              <div className="absolute bottom-6 left-6 right-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.75 }}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl"
+                  style={{ background: 'rgba(10,10,11,0.75)', border: '1px solid rgba(201,168,76,0.18)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {['/mentor2.png', '/mentor1.png', '/mentor4.png'].map((src, i) => (
+                        <div key={i} className="w-7 h-7 rounded-full overflow-hidden border-2 border-[#0d0d0f]">
+                          <Image src={src} alt="" width={28} height={28} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="text-white text-xs font-medium">4 traders. Free access.</div>
-                  <div className="text-[#5a5a66] text-[10px]">3 new videos every week</div>
-                </div>
+                    <div>
+                      <div className="text-white text-xs font-semibold">4 analysts. One platform.</div>
+                      <div className="text-[#5a5a66] text-[10px] mt-0.5">3 new videos every week</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+                    <span className="text-[#c9a84c] text-[10px] font-medium">Free</span>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
       </div>

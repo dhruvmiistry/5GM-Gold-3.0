@@ -57,19 +57,20 @@ export default function HomePage() {
                 <span className="text-[#c9a84c] text-xs font-medium tracking-wide">Weekly Intelligence</span>
               </div>
               <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
-                <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Three free videos.</span>
+                <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>A free platform for traders</span>
                 <br />
-                <span className="font-display italic text-gold-gradient">Every week.</span>
+                <span className="font-display italic text-gold-gradient">stuck in the cycle.</span>
               </h2>
               <p className="text-[#8e8e9a] text-base leading-relaxed mb-8">
-                Access three new analyst videos every week from the 5GM team. Weekly outlooks, market breakdowns, and trader psychology — inside the platform, free.
+                Weekly breakdowns, trader psychology, and execution insights from the 5GM team — built from the mistakes, losses, and lessons that shaped us as traders.
               </p>
               <ul className="space-y-3 mb-8">
                 {[
-                  'Fresh videos released each week',
-                  'Four analysts covering different instruments',
-                  'Outlooks, breakdowns, and psychology',
-                  'No pricing. Platform access is free.',
+                  'Learn why most traders stay inconsistent',
+                  'Weekly insights focused on discipline and execution',
+                  'Understand market structure without emotional trading',
+                  'Real lessons from traders who went through the same cycle',
+                  'Free access. No hidden paywall.',
                 ].map(item => (
                   <li key={item} className="flex items-center gap-3 text-sm text-[#8e8e9a]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] shrink-0" />
@@ -88,22 +89,49 @@ export default function HomePage() {
             </div>
 
             <div className="relative">
-              <div className="space-y-3">
+              {/* ambient glow behind cards */}
+              <div className="absolute -inset-4 rounded-3xl" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 70%)' }} />
+
+              <div className="relative space-y-3">
                 {[
-                  { category: 'Weekly Outlook', title: 'DXY & Gold Setup — This Week', trader: 'Trader One', time: '30:47' },
-                  { category: 'Market Breakdown', title: 'NASDAQ Structure Shift Confirmed', trader: 'Trader Two', time: '20:34' },
-                  { category: 'Psychology', title: 'Managing Drawdown Like a Professional', trader: 'Trader Three', time: '15:56' },
+                  { category: 'Weekly Outlook', title: 'Why traders force bad setups every Monday', trader: 'Bani', time: '30:47', isNew: true },
+                  { category: 'Discipline', title: 'How emotional trading destroys consistency', trader: 'Albin', time: '20:34', isNew: false },
+                  { category: 'Psychology', title: 'The greed cycle that blows funded accounts', trader: 'Mubz', time: '15:56', isNew: false },
                 ].map((v, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-xl card transition-all" style={{ opacity: 1 - i * 0.08 }}>
-                    <div className="w-14 h-10 rounded-lg bg-[rgba(201,168,76,0.05)] border border-[rgba(201,168,76,0.1)] flex items-center justify-center shrink-0">
-                      <Eye size={14} className="text-[#c9a84c] opacity-60" />
+                  <div
+                    key={i}
+                    className="group flex items-center gap-4 p-4 rounded-2xl card card-gold card-lift cursor-pointer"
+                    style={{ opacity: 1 - i * 0.12, transform: `translateX(${i * 6}px)` }}
+                  >
+                    {/* thumbnail */}
+                    <div className="relative w-16 h-12 rounded-xl shrink-0 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)', border: '1px solid rgba(201,168,76,0.15)' }}>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)' }}>
+                          <Eye size={12} className="text-[#c9a84c]" style={{ marginLeft: '1px' }} />
+                        </div>
+                      </div>
                     </div>
+
                     <div className="flex-1 min-w-0">
-                      <span className="text-[#c9a84c] text-[10px] font-medium tracking-wide block mb-0.5">{v.category}</span>
-                      <p className="text-white text-xs font-medium truncate">{v.title}</p>
-                      <p className="text-[#5a5a66] text-[11px] mt-0.5">{v.trader}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[#c9a84c] text-[9px] font-semibold uppercase tracking-widest">{v.category}</span>
+                        {v.isNew && (
+                          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.2)' }}>New</span>
+                        )}
+                      </div>
+                      <p className="text-white text-sm font-medium leading-snug truncate">{v.title}</p>
+                      <p className="text-[#5a5a66] text-[11px] mt-0.5 flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-[#c9a84c] opacity-40 shrink-0" />
+                        {v.trader}
+                      </p>
                     </div>
-                    <span className="text-[#5a5a66] text-xs font-mono shrink-0">{v.time}</span>
+
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <span className="text-[#3a3a46] text-[10px] font-mono">{v.time}</span>
+                      <div className="w-8 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                        <div className="h-full rounded-full bg-[#c9a84c] opacity-40" style={{ width: `${[65, 40, 25][i]}%` }} />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
