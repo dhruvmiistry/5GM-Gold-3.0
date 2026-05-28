@@ -33,7 +33,7 @@ export default function HeroSection() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-[rgba(201,168,76,0.2)] mb-8"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-              <span className="text-[#c9a84c] text-xs font-medium tracking-widest uppercase">Gold Access Coming Soon</span>
+              <span className="text-[#c9a84c] text-xs font-medium tracking-widest uppercase">Private Trading Platform</span>
             </motion.div>
 
             <motion.h1
@@ -56,7 +56,7 @@ export default function HeroSection() {
               className="text-[#8e8e9a] text-lg font-light leading-relaxed max-w-lg mb-10"
             >
               Built for traders serious about refinement, discipline, and execution.
-              Three free analyst videos every week. Gold tier launching soon.
+              Three free analyst videos every week.
             </motion.p>
 
             <motion.div
@@ -97,11 +97,6 @@ export default function HeroSection() {
                   <div className="text-[#5a5a66] text-xs tracking-wide mt-0.5">{s.label}</div>
                 </div>
               ))}
-              <div className="w-px h-8 bg-[rgba(255,255,255,0.07)]" />
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-                <span className="text-[#5a5a66] text-xs">Gold launching soon</span>
-              </div>
             </motion.div>
           </div>
 

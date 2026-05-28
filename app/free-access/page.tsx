@@ -21,10 +21,10 @@ export default function FreeAccessPage() {
               <span className="text-[#c9a84c] text-xs font-medium tracking-widest uppercase">Weekly Intelligence</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-light text-white mb-6 leading-tight">
-              Analyst briefings.
+            <h1 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Analyst briefings.</span>
               <br />
-              <span className="text-gold-gradient">Every week.</span>
+              <span className="font-display italic text-gold-gradient">Every week.</span>
             </h1>
 
             <p className="text-[#8e8e9a] text-lg font-light leading-relaxed max-w-2xl mx-auto mb-12">
@@ -52,7 +52,7 @@ export default function FreeAccessPage() {
         {/* What you get */}
         <section className="py-16 px-6 border-t border-[rgba(255,255,255,0.06)] max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-light text-white mb-4">Inside free platform access</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl leading-[1.05] tracking-tight mb-4 text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Inside free platform access</h2>
             <p className="text-[#5a5a66] text-sm">Available immediately. No pricing required.</p>
           </div>
 

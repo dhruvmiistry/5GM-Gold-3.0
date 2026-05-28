@@ -112,21 +112,35 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
           {navItems.filter(i => i.locked).map(item => {
             const isActive = pathname === item.href
             const unlocked = hasGoldAccess
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={`sidebar-link ${unlocked ? (isActive ? 'active' : '') : 'locked-nav'}`}
-              >
+            const inner = (
+              <>
                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.75} />
-                <span className="flex-1 font-medium">{item.label}</span>
+                <span
+                  className="flex-1 font-medium transition-all"
+                  style={!unlocked ? { filter: 'blur(3px)', userSelect: 'none' } : {}}
+                >
+                  {item.label}
+                </span>
                 {unlocked ? (
                   isActive && <ChevronRight size={11} className="text-[#c9a84c] opacity-60" />
                 ) : (
                   <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
                 )}
+              </>
+            )
+            return unlocked ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onMobileClose}
+                className={`sidebar-link ${isActive ? 'active' : ''}`}
+              >
+                {inner}
               </Link>
+            ) : (
+              <div key={item.href} className="sidebar-link locked-nav cursor-default">
+                {inner}
+              </div>
             )
           })}
         </div>

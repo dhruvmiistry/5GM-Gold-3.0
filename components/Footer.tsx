@@ -37,12 +37,12 @@ export default function Footer() {
 
           {/* Content */}
           <div>
-            <h4 className="text-[#8e8e9a] text-xs font-semibold uppercase tracking-wider mb-4">Gold Access</h4>
+            <h4 className="text-[#8e8e9a] text-xs font-semibold uppercase tracking-wider mb-4">Content</h4>
             <ul className="space-y-3">
               {[
                 'Weekly Outlooks',
                 'Live Sessions',
-                'Gold Modules',
+                'Development Modules',
                 'Strategy Vault',
                 'Market Breakdowns',
               ].map(l => (
@@ -64,15 +64,11 @@ export default function Footer() {
             © 2026 5GM Gold. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-              <span className="text-[#5a5a66] text-xs">Gold tier launching soon</span>
-            </div>
             <Image
               src="/pbw.png"
               alt="Powered by WebPlug"
-              width={72}
-              height={20}
+              width={400}
+              height={38}
               className="h-4 w-auto object-contain opacity-30 hover:opacity-55 transition-opacity duration-300"
             />
           </div>

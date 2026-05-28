@@ -10,12 +10,12 @@ import CTASection from '@/components/CTASection'
 import { mockTeam } from '@/lib/mockData'
 
 const features = [
-  { icon: TrendingUp, title: 'Weekly Outlooks', description: 'Full analyst coverage of key markets every Monday. Know the narrative before the move.', locked: true },
-  { icon: Radio, title: 'Private Coaching', description: 'One-to-one sessions with 5GM analysts. Private advisory tailored to your trading.', locked: true },
-  { icon: Eye, title: 'Live Sessions', description: 'Access the live trading room. Watch 5GM analysts work through market structure in real time.', locked: true },
-  { icon: Shield, title: 'Strategy Vault', description: 'Complete playbooks, execution models, and trade frameworks from the full analyst team.', locked: true },
-  { icon: BarChart2, title: 'Market Breakdowns', description: 'Detailed analysis of individual instruments. Free content available weekly.', locked: false },
-  { icon: BookOpen, title: 'Development Modules', description: 'Eight structured modules from market foundations to professional execution standards.', locked: true },
+  { icon: TrendingUp, title: 'Weekly Outlooks', description: 'Full analyst coverage of key markets every Monday. Know the narrative before the move.' },
+  { icon: Radio, title: 'Private Coaching', description: 'One-to-one sessions with 5GM analysts. Private advisory tailored to your trading.' },
+  { icon: Eye, title: 'Live Sessions', description: 'Access the live trading room. Watch 5GM analysts work through market structure in real time.' },
+  { icon: Shield, title: 'Strategy Vault', description: 'Complete playbooks, execution models, and trade frameworks from the full analyst team.' },
+  { icon: BarChart2, title: 'Market Breakdowns', description: 'Detailed analysis of individual instruments. Free content available weekly.' },
+  { icon: BookOpen, title: 'Development Modules', description: 'Eight structured modules from market foundations to professional execution standards.' },
 ]
 
 export default function HomePage() {
@@ -36,7 +36,7 @@ export default function HomePage() {
             <span className="font-display italic text-gold-gradient">Built for serious traders.</span>
           </h2>
           <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
-            Free weekly analyst videos — with a full private trading platform behind Gold access.
+            Free weekly analyst videos — with a full private trading platform for serious traders.
           </p>
         </div>
 

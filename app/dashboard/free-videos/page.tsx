@@ -35,8 +35,10 @@ export default function FreeBriefingsPage() {
         <motion.div variants={stagger} initial="hidden" animate="show">
           <motion.div variants={fadeUp}>
             <p className="section-label mb-2">Free Access</p>
-            <h1 className="text-[1.7rem] font-light text-white tracking-tight leading-snug mb-2">
-              Free Briefings
+            <h1 className="text-3xl sm:text-4xl md:text-5xl leading-[1.05] tracking-tight mb-2">
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Free</span>
+              {' '}
+              <span className="font-display italic text-gold-gradient">Briefings.</span>
             </h1>
             <p className="text-[#5a5a66] text-sm">
               Three new briefings every week from the full team. New content drops every week.
