@@ -17,11 +17,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, isLoading, router])
 
-  // No user yet — render nothing while auth resolves (avoids spinner hang)
-  if (!user) {
-    return <div className="min-h-screen bg-[#0a0a0b]" />
-  }
-
   return (
     <div className="flex h-screen bg-[#0a0a0b] overflow-hidden">
       <DashboardSidebar
