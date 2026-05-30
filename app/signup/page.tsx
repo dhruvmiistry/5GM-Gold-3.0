@@ -38,8 +38,15 @@ export default function SignupPage() {
     setLoading(true)
     try {
       await signup(name, email, password, experience)
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+        setError('An account with this email already exists. Try signing in.')
+      } else if (msg) {
+        setError(msg)
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }

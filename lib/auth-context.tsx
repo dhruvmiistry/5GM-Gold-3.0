@@ -211,14 +211,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!SUPABASE_CONFIGURED) {
       localStorage.removeItem(MOCK_KEY)
       setUser(null)
-      router.push('/')
+      window.location.href = '/'
       return
     }
     const { createClient } = await import('./supabase/client')
     const supabase = createClient()
     await supabase.auth.signOut()
     setUser(null)
-    router.push('/')
+    window.location.href = '/'
   }
 
   const refreshUser = async () => {

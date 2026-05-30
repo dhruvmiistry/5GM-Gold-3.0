@@ -21,8 +21,15 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email, password)
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.toLowerCase().includes('invalid')) {
+        setError('Incorrect email or password.')
+      } else if (msg) {
+        setError(msg)
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
