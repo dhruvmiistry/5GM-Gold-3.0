@@ -15,10 +15,18 @@ type Video = {
   modules?: { title: string } | null
 }
 
+const SECTIONS = [
+  { label: 'Free Videos',        category: 'Free Video',       access_level: 'free' },
+  { label: 'Market Breakdowns',  category: 'Market Breakdown', access_level: 'gold' },
+  { label: 'Psychology & Risk',  category: 'Psychology',       access_level: 'free' },
+  { label: 'Weekly Outlooks',    category: 'Weekly Outlook',   access_level: 'gold' },
+  { label: 'Gold Content',       category: 'Gold',             access_level: 'gold' },
+]
+
 const emptyForm = {
   title: '', slug: '', description: '', thumbnail_url: '',
-  category: '', analyst_name: '', module_id: '',
-  access_level: 'free', status: 'draft', release_date: '',
+  section: 'Free Videos', analyst_name: '', module_id: '',
+  access_level: 'free', category: 'Free Video', status: 'draft', release_date: '',
 }
 
 type UploadState = 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
@@ -157,9 +165,12 @@ export default function AdminVideosPage() {
 
   const openEdit = (v: Video) => {
     setEditing(v)
+    const matchedSection = SECTIONS.find(s => s.category === v.category && s.access_level === v.access_level)
     setForm({
       title: v.title, slug: v.slug, description: v.description ?? '',
-      thumbnail_url: v.thumbnail_url ?? '', category: v.category ?? '',
+      thumbnail_url: v.thumbnail_url ?? '',
+      section: matchedSection?.label ?? 'Free Videos',
+      category: v.category ?? 'Free Video',
       analyst_name: v.analyst_name ?? '', module_id: v.module_id ?? '',
       access_level: v.access_level, status: v.status,
       release_date: v.release_date ? v.release_date.slice(0, 16) : '',
@@ -174,10 +185,17 @@ export default function AdminVideosPage() {
     if (!form.title || !form.slug) return
     setSaving(true)
 
+    const selectedSection = SECTIONS.find(s => s.label === form.section) ?? SECTIONS[0]
     const body = {
-      ...form,
+      title: form.title,
+      slug: form.slug,
+      description: form.description || null,
+      analyst_name: form.analyst_name || null,
       module_id: form.module_id || null,
       release_date: form.release_date || null,
+      status: form.status,
+      category: selectedSection.category,
+      access_level: selectedSection.access_level,
       mux_asset_id: muxAssetId || null,
       mux_playback_id: muxPlaybackId || null,
       mux_upload_id: uploadId || null,
@@ -476,25 +494,41 @@ export default function AdminVideosPage() {
               </div>
 
               {/* Metadata fields */}
-              {[
-                { label: 'Title', key: 'title', placeholder: 'Video title' },
-                { label: 'Slug', key: 'slug', placeholder: 'auto-generated-from-title' },
-                { label: 'Analyst Name', key: 'analyst_name', placeholder: 'e.g. Bani' },
-                { label: 'Category', key: 'category', placeholder: 'e.g. Psychology, Market Breakdown' },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">{f.label}</label>
-                  <input
-                    value={(form as Record<string, string>)[f.key]}
-                    onChange={e => {
-                      const val = e.target.value
-                      setForm(p => ({ ...p, [f.key]: val, ...(f.key === 'title' && !editing ? { slug: autoSlug(val) } : {}) }))
-                    }}
-                    placeholder={f.placeholder}
-                    className="input-dark w-full text-sm"
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Title</label>
+                <input
+                  value={form.title}
+                  onChange={e => {
+                    const val = e.target.value
+                    setForm(p => ({ ...p, title: val, ...(!editing ? { slug: autoSlug(val) } : {}) }))
+                  }}
+                  placeholder="Video title"
+                  className="input-dark w-full text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Upload To</label>
+                <select
+                  value={form.section}
+                  onChange={e => setForm(p => ({ ...p, section: e.target.value }))}
+                  className="input-dark w-full text-sm"
+                >
+                  {SECTIONS.map(s => (
+                    <option key={s.label} value={s.label}>{s.label} ({s.access_level === 'gold' ? 'Gold only' : 'Free'})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Analyst</label>
+                <input
+                  value={form.analyst_name}
+                  onChange={e => setForm(p => ({ ...p, analyst_name: e.target.value }))}
+                  placeholder="e.g. Bani"
+                  className="input-dark w-full text-sm"
+                />
+              </div>
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Description</label>
@@ -502,22 +536,13 @@ export default function AdminVideosPage() {
                   placeholder="Short description…" rows={3} className="input-dark w-full text-sm resize-none" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Access Level</label>
-                  <select value={form.access_level} onChange={e => setForm(p => ({ ...p, access_level: e.target.value }))} className="input-dark w-full text-sm">
-                    <option value="free">Free</option>
-                    <option value="gold">Gold</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Status</label>
-                  <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="input-dark w-full text-sm">
-                    <option value="draft">Draft</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="published">Published</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Status</label>
+                <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="input-dark w-full text-sm">
+                  <option value="draft">Draft — not visible to members</option>
+                  <option value="scheduled">Scheduled — goes live on release date</option>
+                  <option value="published">Published — live now</option>
+                </select>
               </div>
 
               <div>

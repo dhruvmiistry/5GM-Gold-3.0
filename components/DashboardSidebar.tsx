@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { label: 'Live Sessions',     href: '/dashboard/live-sessions',      icon: Radio,           locked: true },
   { label: 'Gold Modules',      href: '/dashboard/gold-modules',       icon: BookOpen,        locked: true },
   { label: 'Strategy Vault',    href: '/dashboard/strategy-vault',     icon: Shield,          locked: true },
-  { label: 'Market Breakdowns', href: '/dashboard/market-breakdowns',  icon: BarChart2,       locked: false },
+  { label: 'Market Breakdowns', href: '/dashboard/market-breakdowns',  icon: BarChart2,       locked: true },
   { label: 'Revision Material', href: '/dashboard/revision-material',  icon: BookMarked,      locked: true },
   { label: 'Announcements',     href: '/dashboard/announcements',      icon: Bell,            locked: false, badge: '2' },
   { label: 'Settings',          href: '/dashboard/settings',           icon: Settings,        locked: false },
@@ -109,40 +109,15 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
             <p className="section-label">Gold Access</p>
             <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
           </div>
-          {navItems.filter(i => i.locked).map(item => {
-            const isActive = pathname === item.href
-            const unlocked = hasGoldAccess
-            const inner = (
-              <>
-                <item.icon size={15} strokeWidth={isActive ? 2 : 1.75} />
-                <span
-                  className="flex-1 font-medium transition-all"
-                  style={!unlocked ? { filter: 'blur(3px)', userSelect: 'none' } : {}}
-                >
-                  {item.label}
-                </span>
-                {unlocked ? (
-                  isActive && <ChevronRight size={11} className="text-[#c9a84c] opacity-60" />
-                ) : (
-                  <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
-                )}
-              </>
-            )
-            return unlocked ? (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={`sidebar-link ${isActive ? 'active' : ''}`}
-              >
-                {inner}
-              </Link>
-            ) : (
-              <div key={item.href} className="sidebar-link locked-nav cursor-default">
-                {inner}
-              </div>
-            )
-          })}
+          {navItems.filter(i => i.locked).map(item => (
+            <div key={item.href} className="sidebar-link locked-nav cursor-default">
+              <item.icon size={15} strokeWidth={1.75} />
+              <span className="flex-1 font-medium" style={{ filter: 'blur(5px)', userSelect: 'none' }}>
+                {item.label}
+              </span>
+              <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
+            </div>
+          ))}
         </div>
 
         {/* Admin Portal link */}

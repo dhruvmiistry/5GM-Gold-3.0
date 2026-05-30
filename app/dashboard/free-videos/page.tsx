@@ -35,13 +35,11 @@ export default function FreeBriefingsPage() {
         <motion.div variants={stagger} initial="hidden" animate="show">
           <motion.div variants={fadeUp}>
             <p className="section-label mb-2">Free Access</p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl leading-[1.05] tracking-tight mb-2">
-              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Free</span>
-              {' '}
-              <span className="font-display italic text-gold-gradient">Briefings.</span>
+            <h1 className="text-[1.7rem] font-light text-white tracking-tight leading-snug mb-2">
+              Free Videos
             </h1>
             <p className="text-[#5a5a66] text-sm">
-              Three new briefings every week from the full team. New content drops every week.
+              Three new videos every week from the full team. New content drops every week.
             </p>
           </motion.div>
         </motion.div>
@@ -62,6 +60,7 @@ export default function FreeBriefingsPage() {
           <p className="text-sm">
             <span className="text-[#c9a84c] font-medium">This week: </span>
             <span className="text-[#8e8e9a]">DXY &amp; Gold Setup, NASDAQ Structure Shift, and Trading Psychology — all uploaded and ready to watch.</span>
+
           </p>
           <span className="ml-auto text-[#3a3a42] text-xs font-mono shrink-0">{filtered.length} videos</span>
         </motion.div>
