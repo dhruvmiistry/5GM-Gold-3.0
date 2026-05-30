@@ -3,11 +3,24 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { mockMarketBreakdowns, Video } from '@/lib/mockData'
+import { DbVideo } from '@/lib/types'
 import VideoCard from '@/components/VideoCard'
-import MockVideoPlayer from '@/components/MockVideoPlayer'
 import { formatDuration, formatDate } from '@/lib/utils'
 import { Play, Lock } from 'lucide-react'
 import Badge from '@/components/Badge'
+
+const adaptToDb = (v: Video): DbVideo => ({
+  id: v.id,
+  title: v.title,
+  description: v.description,
+  thumbnail_url: v.thumbnail,
+  duration: v.duration,
+  category: v.category,
+  release_date: v.releaseDate,
+  analyst_name: v.trader,
+  mux_playback_id: null,
+  processing_status: 'none',
+})
 
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
@@ -20,9 +33,9 @@ const stagger = {
 }
 
 export default function MarketBreakdownsPage() {
-  const [playingVideo, setPlayingVideo] = useState<Video | null>(null)
+  const [playingVideo, setPlayingVideo] = useState<DbVideo | null>(null)
 
-  const freeVideos = mockMarketBreakdowns.filter(v => v.free)
+  const freeVideos = mockMarketBreakdowns.filter(v => v.free).map(adaptToDb)
   const lockedVideos = mockMarketBreakdowns.filter(v => !v.free)
 
   return (
@@ -123,7 +136,7 @@ export default function MarketBreakdownsPage() {
 
       </div>
 
-      {playingVideo && <MockVideoPlayer video={playingVideo} onClose={() => setPlayingVideo(null)} />}
+      {/* Mux player would go here when market breakdowns are connected to the DB */}
     </div>
   )
 }

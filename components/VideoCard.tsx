@@ -1,14 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Play, Clock, Eye } from 'lucide-react'
-import { Video } from '@/lib/mockData'
+import { Play, Clock } from 'lucide-react'
+import { DbVideo } from '@/lib/types'
 import { formatDuration, formatDate } from '@/lib/utils'
 import Badge from './Badge'
 
 interface VideoCardProps {
-  video: Video
-  onPlay: (video: Video) => void
+  video: DbVideo
+  onPlay: (video: DbVideo) => void
 }
 
 const categoryColor: Record<string, 'gold' | 'green' | 'muted'> = {
@@ -19,6 +19,16 @@ const categoryColor: Record<string, 'gold' | 'green' | 'muted'> = {
 }
 
 export default function VideoCard({ video, onPlay }: VideoCardProps) {
+  const thumbnailSrc = video.mux_playback_id
+    ? `https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5`
+    : null
+
+  const initials = (video.analyst_name ?? 'A')
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+
   return (
     <motion.div
       className="group cursor-pointer rounded-2xl overflow-hidden"
@@ -36,30 +46,34 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-[#0d0d0f] overflow-hidden">
-        {/* Base gradient */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 65% 25%, rgba(201,168,76,0.05) 0%, transparent 65%)' }}
-        />
-
-        {/* Waveform */}
-        <div className="absolute inset-0 flex items-end justify-center pb-4 gap-px opacity-[0.18] group-hover:opacity-30 transition-opacity duration-500">
-          {Array.from({ length: 44 }).map((_, i) => (
+        {thumbnailSrc ? (
+          <img
+            src={thumbnailSrc}
+            alt={video.title}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <>
             <div
-              key={i}
-              className="bg-[#c9a84c] rounded-full"
-              style={{
-                width: '2.5px',
-                height: `${14 + Math.sin(i * 0.55) * 22 + (i % 4) * 5}%`,
-              }}
+              className="absolute inset-0"
+              style={{ background: 'radial-gradient(ellipse at 65% 25%, rgba(201,168,76,0.05) 0%, transparent 65%)' }}
             />
-          ))}
-        </div>
+            <div className="absolute inset-0 flex items-end justify-center pb-4 gap-px opacity-[0.18] group-hover:opacity-30 transition-opacity duration-500">
+              {Array.from({ length: 44 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-[#c9a84c] rounded-full"
+                  style={{ width: '2.5px', height: `${14 + Math.sin(i * 0.55) * 22 + (i % 4) * 5}%` }}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Hover overlay */}
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }}
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }}
         />
 
         {/* Play button */}
@@ -69,31 +83,27 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
             style={{
               background: 'rgba(201,168,76,0.12)',
               border: '1px solid rgba(201,168,76,0.3)',
-              boxShadow: '0 0 0 0 rgba(201,168,76,0)',
             }}
           >
-            {/* Outer ring on hover */}
             <div
               className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300"
-              style={{
-                background: 'rgba(201,168,76,0.18)',
-                boxShadow: '0 0 20px rgba(201,168,76,0.2)',
-              }}
+              style={{ background: 'rgba(201,168,76,0.18)', boxShadow: '0 0 20px rgba(201,168,76,0.2)' }}
             />
             <Play size={17} className="text-[#c9a84c] ml-0.5 relative z-10" strokeWidth={2} />
           </div>
         </div>
 
         {/* Duration pill */}
-        <div
-          className="absolute bottom-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-mono"
-          style={{ background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.6)' }}
-        >
-          <Clock size={9} strokeWidth={2} />
-          {formatDuration(video.duration)}
-        </div>
+        {video.duration != null && (
+          <div
+            className="absolute bottom-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-mono"
+            style={{ background: 'rgba(0,0,0,0.65)', color: 'rgba(255,255,255,0.6)' }}
+          >
+            <Clock size={9} strokeWidth={2} />
+            {formatDuration(video.duration)}
+          </div>
+        )}
 
-        {/* Top border accent on hover */}
         <div
           className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)' }}
@@ -103,33 +113,33 @@ export default function VideoCard({ video, onPlay }: VideoCardProps) {
       {/* Content */}
       <div className="p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Badge variant={categoryColor[video.category] || 'muted'}>
-            {video.category}
-          </Badge>
-          <span className="text-[#5a5a66] text-[11px]">{formatDate(video.releaseDate)}</span>
+          {video.category && (
+            <Badge variant={categoryColor[video.category] || 'muted'}>
+              {video.category}
+            </Badge>
+          )}
+          {video.release_date && (
+            <span className="text-[#5a5a66] text-[11px]">{formatDate(video.release_date)}</span>
+          )}
         </div>
 
         <h3 className="text-white text-sm font-medium leading-snug mb-2 group-hover:text-[#e8c96d] transition-colors duration-200 line-clamp-2">
           {video.title}
         </h3>
 
-        <p className="text-[#5a5a66] text-xs leading-relaxed mb-4 line-clamp-2">
-          {video.description}
-        </p>
+        {video.description && (
+          <p className="text-[#5a5a66] text-xs leading-relaxed mb-4 line-clamp-2">
+            {video.description}
+          </p>
+        )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-[rgba(255,255,255,0.05)]">
+        <div className="flex items-center pt-3 border-t border-[rgba(255,255,255,0.05)]">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-[rgba(201,168,76,0.09)] border border-[rgba(201,168,76,0.18)] flex items-center justify-center">
-              <span className="text-[#c9a84c] text-[8px] font-bold">
-                {video.trader.split(' ').map(w => w[0]).join('')}
-              </span>
+              <span className="text-[#c9a84c] text-[8px] font-bold">{initials}</span>
             </div>
-            <span className="text-[#5a5a66] text-[11px]">{video.trader}</span>
-          </div>
-          <div className="flex items-center gap-1 text-[#5a5a66] text-[11px]">
-            <Eye size={11} strokeWidth={1.75} />
-            {video.views.toLocaleString()}
+            <span className="text-[#5a5a66] text-[11px]">{video.analyst_name ?? 'Analyst'}</span>
           </div>
         </div>
       </div>
