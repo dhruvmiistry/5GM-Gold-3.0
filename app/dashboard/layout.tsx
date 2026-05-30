@@ -17,15 +17,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, isLoading, router])
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]">
-        <div className="w-5 h-5 rounded-full border-2 border-[#c9a84c] border-t-transparent animate-spin" />
-      </div>
-    )
+  // No user yet — render nothing while auth resolves (avoids spinner hang)
+  if (!user) {
+    return <div className="min-h-screen bg-[#0a0a0b]" />
   }
-
-  if (!user) return null
 
   return (
     <div className="flex h-screen bg-[#0a0a0b] overflow-hidden">
