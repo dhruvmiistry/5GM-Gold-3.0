@@ -17,11 +17,23 @@ export async function GET(request: NextRequest) {
   if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { searchParams } = new URL(request.url)
+  const id     = searchParams.get('id')
   const search = searchParams.get('search') ?? ''
   const plan   = searchParams.get('plan')   ?? 'all'
   const page   = Math.max(0, parseInt(searchParams.get('page') ?? '0', 10))
 
   const admin = createAdminClient()
+
+  if (id) {
+    const { data, error } = await admin
+      .from('profiles')
+      .select('id,full_name,email,plan,role,access_level,trading_experience,admin_notes,created_at,updated_at')
+      .eq('id', id)
+      .single()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
   let query = admin
     .from('profiles')
     .select('id,full_name,email,plan,role,access_level,trading_experience,created_at', { count: 'exact' })

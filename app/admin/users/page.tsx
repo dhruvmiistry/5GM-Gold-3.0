@@ -60,14 +60,19 @@ export default function AdminUsersPage() {
 
   const updateUser = async (userId: string, updates: Partial<Profile>) => {
     setUpdatingId(userId)
-    await fetch('/api/admin/users', {
+    const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, updates }),
     })
-    await fetchUsers()
+    if (res.ok) {
+      await fetchUsers()
+      showToast('User updated successfully')
+    } else {
+      const json = await res.json().catch(() => ({}))
+      showToast(json.error ?? 'Failed to update user')
+    }
     setUpdatingId(null)
-    showToast('User updated successfully')
   }
 
   return (

@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import AdminSidebar from '@/components/AdminSidebar'
 import Link from 'next/link'
-import { Menu, ChevronRight } from 'lucide-react'
+import { Menu, ChevronRight, LogOut } from 'lucide-react'
 
 const pageLabels: Record<string, string> = {
   '/admin': 'Overview',
@@ -22,7 +22,7 @@ const pageLabels: Record<string, string> = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -67,7 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )}
           </div>
 
-          {/* User pill */}
+          {/* User pill + sign out */}
           <div className="ml-auto flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full"
               style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.12)' }}>
@@ -76,6 +76,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <span className="text-[#c9a84c] text-[11px] font-medium">{user?.name?.split(' ')[0] ?? 'Admin'}</span>
             </div>
+            <button
+              onClick={logout}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-[#5a5a66] hover:text-[#e85757] hover:bg-[rgba(232,87,87,0.08)] transition-all"
+              title="Sign out"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         </header>
 

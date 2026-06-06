@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, TrendingUp, UserMinus, ShieldCheck, Shield, Save, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 type Profile = {
   id: string; full_name: string | null; email: string | null
@@ -15,7 +14,6 @@ type Profile = {
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState('')
@@ -26,44 +24,62 @@ export default function UserDetailPage() {
 
   const fetchProfile = async () => {
     const res = await fetch(`/api/admin/users?id=${id}`)
+    if (!res.ok) { setLoading(false); return }
     const data = await res.json()
-    const user = Array.isArray(data) ? data.find((u: Profile) => u.id === id) : null
-    if (user) { setProfile(user); setNotes(user.admin_notes ?? '') }
+    if (data?.id) { setProfile(data); setNotes(data.admin_notes ?? '') }
     setLoading(false)
   }
 
   useEffect(() => { fetchProfile() }, [id])
 
-  const updatePlan = async (plan: string) => {
-    setSaving(true)
-    await fetch('/api/admin/users', {
+  const patchUser = async (updates: Record<string, string>) => {
+    const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: id, updates: { plan, access_level: plan } }),
+      body: JSON.stringify({ userId: id, updates }),
     })
-    await fetchProfile()
-    setSaving(false)
-    showToast(`Plan updated to ${plan}`)
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      throw new Error(json.error ?? 'Failed to update')
+    }
+  }
+
+  const updatePlan = async (plan: string) => {
+    setSaving(true)
+    try {
+      await patchUser({ plan, access_level: plan })
+      await fetchProfile()
+      showToast(`Plan updated to ${plan}`)
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to update plan')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const updateRole = async (role: string) => {
     setSaving(true)
-    await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: id, updates: { role } }),
-    })
-    await fetchProfile()
-    setSaving(false)
-    showToast(`Role updated to ${role}`)
+    try {
+      await patchUser({ role })
+      await fetchProfile()
+      showToast(`Role updated to ${role}`)
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to update role')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const saveNotes = async () => {
     setSaving(true)
-    const supabase = createClient()
-    await supabase.from('profiles').update({ admin_notes: notes }).eq('id', id)
-    setSaving(false)
-    showToast('Notes saved')
+    try {
+      await patchUser({ admin_notes: notes })
+      showToast('Notes saved')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to save notes')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) return (
