@@ -21,6 +21,7 @@ export interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  pendingConfirmation: boolean   // true after signup if email confirmation is required
   login: (email: string, password: string) => Promise<void>
   signup: (name: string, email: string, password: string, experience: string) => Promise<void>
   logout: () => void
@@ -74,6 +75,7 @@ function profileToUser(profile: any, email: string): User {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
   const router = useRouter()
 
   // ── Fetch profile from Supabase and set user ──────────
@@ -157,7 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     if (!SUPABASE_CONFIGURED) {
-      // Mock fallback
       await new Promise(r => setTimeout(r, 700))
       const mockUser = mockUserFromData({
         id: 'usr_' + Math.random().toString(36).slice(2, 8),
@@ -173,15 +174,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { createClient } = await import('./supabase/client')
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw new Error(error.message)
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) throw new Error('Incorrect email or password.')
+      if (error.message.includes('Email not confirmed'))       throw new Error('Please confirm your email before signing in.')
+      if (error.message.includes('Too many requests'))         throw new Error('Too many attempts. Please wait a few minutes.')
+      throw new Error(error.message)
+    }
     await fetchAndSetUser()
     router.push('/dashboard')
   }
 
   const signup = async (name: string, email: string, password: string, experience: string) => {
     if (!SUPABASE_CONFIGURED) {
-      // Mock fallback
       await new Promise(r => setTimeout(r, 900))
       const mockUser = mockUserFromData({
         id: 'usr_' + Math.random().toString(36).slice(2, 8),
@@ -195,14 +200,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { createClient } = await import('./supabase/client')
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
       password,
       options: {
-        data: { full_name: name, trading_experience: experience, signup_source: 'web' },
+        data: { full_name: name.trim(), trading_experience: experience, signup_source: 'web' },
       },
     })
-    if (error) throw new Error(error.message)
+    if (error) {
+      if (error.message.includes('User already registered')) throw new Error('An account with this email already exists.')
+      if (error.message.includes('Password should be'))      throw new Error('Password must be at least 8 characters.')
+      if (error.message.includes('Unable to validate'))      throw new Error('Invalid email address.')
+      if (error.message.includes('Too many requests'))       throw new Error('Too many signups from this device. Please try again later.')
+      throw new Error(error.message)
+    }
+
+    // If email confirmation is required, Supabase returns a user with no session
+    if (data.user && !data.session) {
+      setPendingConfirmation(true)
+      return
+    }
+
     await fetchAndSetUser()
     router.push('/dashboard')
   }
@@ -226,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

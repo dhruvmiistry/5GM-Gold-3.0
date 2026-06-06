@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
@@ -8,11 +9,16 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const { login } = useAuth()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(
+    searchParams.get('error') === 'confirmation_failed'
+      ? 'That confirmation link has expired or already been used. Please sign in or request a new one.'
+      : ''
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

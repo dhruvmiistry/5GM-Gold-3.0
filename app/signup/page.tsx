@@ -15,7 +15,7 @@ const experienceOptions = [
 ]
 
 export default function SignupPage() {
-  const { signup } = useAuth()
+  const { signup, pendingConfirmation } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,8 +30,8 @@ export default function SignupPage() {
       setError('Please complete all fields.')
       return
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     setError('')
@@ -50,6 +50,28 @@ export default function SignupPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (pendingConfirmation) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center px-4 py-16">
+        <div className="relative z-10 w-full max-w-sm text-center">
+          <Link href="/" className="inline-block mb-10">
+            <Image src="/logo.png" alt="5GM Gold" width={140} height={44} className="h-10 w-auto object-contain mx-auto" />
+          </Link>
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-6 flex items-center justify-center"
+            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.22)' }}>
+            <span className="text-2xl">✉️</span>
+          </div>
+          <h1 className="text-white text-2xl font-light mb-3">Check your email</h1>
+          <p className="text-[#5a5a66] text-sm leading-relaxed">
+            We sent a confirmation link to <span className="text-[#c9a84c]">{email}</span>.
+            Click it to activate your account.
+          </p>
+          <p className="text-[#3a3a46] text-xs mt-6">Didn&apos;t receive it? Check your spam folder.</p>
+        </div>
+      </div>
+    )
   }
 
   return (

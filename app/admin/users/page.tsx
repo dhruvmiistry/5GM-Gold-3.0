@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Search, ChevronRight, TrendingUp, UserMinus, Loader2 } from 'lucide-react'
+import { Search, ChevronRight, TrendingUp, UserMinus, Loader2, ChevronLeft } from 'lucide-react'
 
 type Profile = {
   id: string; full_name: string | null; email: string | null
@@ -16,26 +16,45 @@ function PlanBadge({ plan, role }: { plan: string; role: string }) {
   return <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full text-[#5a5a66] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]">Free</span>
 }
 
+const PAGE_SIZE = 50
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<Profile[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [planFilter, setPlanFilter] = useState('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounce search input — 300ms
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value)
+      setPage(0)
+    }, 300)
+  }
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (search) params.set('search', search)
+    const params = new URLSearchParams({ page: String(page) })
+    if (debouncedSearch) params.set('search', debouncedSearch)
     if (planFilter !== 'all') params.set('plan', planFilter)
     const res = await fetch(`/api/admin/users?${params}`)
-    const data = await res.json()
-    setUsers(Array.isArray(data) ? data : [])
+    const json = await res.json()
+    setUsers(Array.isArray(json.data) ? json.data : [])
+    setTotal(json.total ?? 0)
     setLoading(false)
-  }, [search, planFilter])
+  }, [debouncedSearch, planFilter, page])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
+
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
@@ -60,7 +79,7 @@ export default function AdminUsersPage() {
           <div>
             <p className="section-label mb-1.5">Admin</p>
             <h1 className="text-2xl font-light text-white tracking-tight">Users</h1>
-            <p className="text-[#5a5a66] text-sm mt-1">{users.length} members total</p>
+            <p className="text-[#5a5a66] text-sm mt-1">{total} members total</p>
           </div>
         </div>
 
@@ -70,7 +89,7 @@ export default function AdminUsersPage() {
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a5a66]" />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => handleSearchChange(e.target.value)}
               placeholder="Search by name or email…"
               className="input-dark pl-9 w-full text-sm"
             />
@@ -178,6 +197,35 @@ export default function AdminUsersPage() {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-[#5a5a66] text-xs">
+              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5a5a66] disabled:opacity-30 hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all"
+                style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-[#5a5a66] text-xs px-2">Page {page + 1} / {totalPages}</span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5a5a66] disabled:opacity-30 hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all"
+                style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Toast */}
