@@ -18,9 +18,10 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://stream.mux.com",
-      "media-src 'self' https://stream.mux.com",
-      "frame-src 'self' https://stream.mux.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.mux.com wss://*.mux.com",
+      "media-src 'self' blob: https://*.mux.com",
+      "frame-src 'self' https://*.mux.com",
+      "worker-src 'self' blob:",
     ].join("; "),
   },
 ];
@@ -48,6 +49,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "image.mux.com" },
     ],
   },
 

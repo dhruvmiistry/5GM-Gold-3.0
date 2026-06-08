@@ -127,7 +127,14 @@ export default function AdminVideosPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ corsOrigin: window.location.origin }),
     })
-    const { uploadId: uid, uploadUrl } = await res.json()
+    const data = await res.json()
+    if (!res.ok || !data.uploadUrl) {
+      setUploadState('error')
+      showToast(data.error || `Server error ${res.status} — check console`)
+      console.error('Mux upload init failed:', data)
+      return
+    }
+    const { uploadId: uid, uploadUrl } = data
     setUploadId(uid)
 
     // Upload directly to Mux
@@ -136,8 +143,22 @@ export default function AdminVideosPage() {
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100))
       }
-      xhr.onload = () => { setUploadState('processing'); setUploadProgress(100); resolve() }
-      xhr.onerror = () => { setUploadState('error'); reject() }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setUploadState('processing'); setUploadProgress(100); resolve()
+        } else {
+          setUploadState('error')
+          showToast(`Mux upload failed — HTTP ${xhr.status}`)
+          console.error('Mux XHR error:', xhr.status, xhr.responseText)
+          reject()
+        }
+      }
+      xhr.onerror = () => {
+        setUploadState('error')
+        showToast('Network error during upload — check console')
+        console.error('Mux XHR network error. Upload URL was:', uploadUrl)
+        reject()
+      }
       xhr.open('PUT', uploadUrl)
       xhr.send(file)
     })

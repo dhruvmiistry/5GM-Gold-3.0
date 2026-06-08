@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const { corsOrigin } = await request.json().catch(() => ({ corsOrigin: '*' }))
 
   const upload = await mux.video.uploads.create({
-    cors_origin: corsOrigin || '*',
+    cors_origin: '*',
     new_asset_settings: {
       playback_policy: ['public'],
       mp4_support: 'capped-1080p',
