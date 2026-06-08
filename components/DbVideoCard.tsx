@@ -28,7 +28,7 @@ function getMuxThumbnail(playbackId: string | null) {
 }
 
 export default function DbVideoCard({ video, onPlay }: DbVideoCardProps) {
-  const thumbnail = video.thumbnail_url || getMuxThumbnail(video.video_url)
+  const thumbnail = video.thumbnail_url || getMuxThumbnail(video.mux_playback_id)
   const category = video.category ?? 'General'
 
   return (
