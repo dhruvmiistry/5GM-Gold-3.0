@@ -35,7 +35,7 @@ export default function MuxVideoPlayer({ video, onClose }: MuxVideoPlayerProps) 
     }
   }, [onClose])
 
-  const playbackId = video.video_url ?? ''
+  const playbackId = video.mux_playback_id ?? ''
   const category = video.category ?? 'General'
 
   return (
