@@ -30,7 +30,16 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+    ]) as Awaited<ReturnType<typeof supabase.auth.getUser>>
+    user = result.data.user
+  } catch {
+    // Supabase unreachable — treat as unauthenticated, don't block the request
+  }
   const path = request.nextUrl.pathname
 
   // Redirect authenticated users away from auth pages
@@ -50,11 +59,16 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    let profile = null
+    try {
+      const profileResult = await Promise.race([
+        supabase.from('profiles').select('role').eq('id', user.id).single(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ]) as { data: { role: string } | null }
+      profile = profileResult.data
+    } catch {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
 
     if (!profile || profile.role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))

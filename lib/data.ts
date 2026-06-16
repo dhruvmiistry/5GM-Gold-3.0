@@ -176,6 +176,36 @@ export async function getModules(): Promise<Module[]> {
   } catch { return mockModules }
 }
 
+export async function getContentCounts(): Promise<{
+  freeVideos: number
+  goldModules: number
+  liveSessions: number
+  marketBreakdowns: number
+}> {
+  const fallback = {
+    freeVideos: mockFreeVideos.length,
+    goldModules: mockModules.length,
+    liveSessions: mockLiveSessions.length,
+    marketBreakdowns: mockMarketBreakdowns.length,
+  }
+  if (!SUPABASE_CONFIGURED) return fallback
+  try {
+    const supabase = await getSupabase()
+    const [freeVideosRes, goldModulesRes, liveSessionsRes, marketBreakdownsRes] = await Promise.all([
+      supabase.from('videos').select('id', { count: 'exact', head: true }).eq('access_level', 'free').eq('status', 'published'),
+      supabase.from('modules').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+      supabase.from('live_sessions').select('id', { count: 'exact', head: true }).in('status', ['upcoming', 'live']),
+      supabase.from('videos').select('id', { count: 'exact', head: true }).eq('category', 'Market Breakdown').eq('status', 'published'),
+    ])
+    return {
+      freeVideos: freeVideosRes.count ?? fallback.freeVideos,
+      goldModules: goldModulesRes.count ?? fallback.goldModules,
+      liveSessions: liveSessionsRes.count ?? fallback.liveSessions,
+      marketBreakdowns: marketBreakdownsRes.count ?? fallback.marketBreakdowns,
+    }
+  } catch { return fallback }
+}
+
 export async function getStrategyVault() {
   return mockStrategyVault
 }
