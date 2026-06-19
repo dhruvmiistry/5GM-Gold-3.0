@@ -79,7 +79,7 @@ export default function TeamCard({ member, index = 0 }: TeamCardProps) {
       />
 
       {/* Image */}
-      <div className="relative w-full overflow-hidden" style={{ height: '300px' }}>
+      <div className="relative w-full overflow-hidden" style={{ height: '220px' }}>
         {member.image ? (
           <Image
             src={member.image}

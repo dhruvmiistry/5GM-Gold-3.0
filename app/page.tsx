@@ -27,29 +27,31 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Features */}
-      <section className="py-24 px-6 max-w-7xl mx-auto" id="platform">
-        <div className="text-center mb-16">
-          <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Platform</p>
-          <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
-            <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>One private ecosystem.</span>
-            <br />
-            <span className="font-display italic text-gold-gradient">Built for serious traders.</span>
-          </h2>
-          <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
-            Free weekly analyst videos — with a full private trading platform for serious traders.
-          </p>
-        </div>
+      <section className="min-h-screen flex flex-col justify-center py-16 px-6 scroll-mt-16" id="platform">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="text-center mb-10">
+            <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Platform</p>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] tracking-tight mb-4">
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>One private ecosystem.</span>
+              <br />
+              <span className="font-display italic text-gold-gradient">Built for serious traders.</span>
+            </h2>
+            <p className="text-[#8e8e9a] text-base font-light max-w-xl mx-auto">
+              Free weekly analyst videos — with a full private trading platform for serious traders.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {features.map((f, i) => (
-            <FeatureCard key={f.title} {...f} index={i} />
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((f, i) => (
+              <FeatureCard key={f.title} {...f} index={i} />
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Free Funnel Section */}
-      <section className="py-24 border-t border-[rgba(255,255,255,0.06)]">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="min-h-screen flex flex-col justify-center py-16 scroll-mt-16" id="about">
+        <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(201,168,76,0.08)] border border-[rgba(201,168,76,0.2)] mb-6">
@@ -141,16 +143,16 @@ export default function HomePage() {
       </section>
 
       {/* Team */}
-      <section className="py-24 px-6 border-t border-[rgba(255,255,255,0.06)]" id="team">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+      <section className="min-h-screen flex flex-col justify-center py-16 px-6 scroll-mt-24" id="team">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="text-center mb-10">
             <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Analysts</p>
-            <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] tracking-tight mb-4">
               <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Four analysts.</span>
               <br />
               <span className="font-display italic text-gold-gradient">One private platform.</span>
             </h2>
-            <p className="text-[#8e8e9a] text-lg font-light max-w-xl mx-auto">
+            <p className="text-[#8e8e9a] text-base font-light max-w-xl mx-auto">
               Each analyst covers distinct instruments and market structures. Collectively — one ecosystem.
             </p>
           </div>

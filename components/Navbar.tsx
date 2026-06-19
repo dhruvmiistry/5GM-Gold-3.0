@@ -7,9 +7,10 @@ import { useAuth } from '@/lib/auth-context'
 import { Menu, X } from 'lucide-react'
 
 const navLinks = [
-  { label: 'Free Videos', href: '/free-access' },
-  { label: 'About', href: '/#team' },
+  { label: 'Home', href: '/' },
   { label: 'Platform', href: '/#platform' },
+  { label: 'About', href: '/#about' },
+  { label: 'Analysts', href: '/#team' },
 ]
 
 export default function Navbar() {
@@ -33,14 +34,14 @@ export default function Navbar() {
           alt="5GM Gold"
           width={96}
           height={30}
-          className="h-7 w-auto object-contain transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(201,168,76,0.55)]"
+          className="h-10 w-auto object-contain transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(201,168,76,0.55)]"
           priority
         />
       </Link>
 
       {/* Floating pill */}
       <div
-        className="pointer-events-auto w-full max-w-2xl rounded-full flex items-center px-2 py-1.5"
+        className="pointer-events-auto w-full max-w-lg rounded-full flex items-center px-2 py-1.5"
         style={{
           background: scrolled ? 'rgba(8,8,9,0.90)' : 'rgba(12,12,14,0.78)',
           backdropFilter: 'blur(28px)',
@@ -125,7 +126,7 @@ export default function Navbar() {
 
       {/* Mobile dropdown */}
       <div
-        className="pointer-events-auto w-full max-w-2xl mt-2 rounded-2xl overflow-hidden"
+        className="pointer-events-auto w-full max-w-lg mt-2 rounded-2xl overflow-hidden"
         style={{
           maxHeight: open ? '420px' : '0px',
           opacity: open ? 1 : 0,

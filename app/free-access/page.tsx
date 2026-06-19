@@ -22,7 +22,7 @@ export default function FreeAccessPage() {
             </div>
 
             <h1 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
-              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Analyst briefings.</span>
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Three videos.</span>
               <br />
               <span className="font-display italic text-gold-gradient">Every week.</span>
             </h1>

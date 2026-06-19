@@ -226,17 +226,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
-    if (!SUPABASE_CONFIGURED) {
-      localStorage.removeItem(MOCK_KEY)
+    try {
+      if (!SUPABASE_CONFIGURED) {
+        localStorage.removeItem(MOCK_KEY)
+      } else {
+        const { createClient } = await import('./supabase/client')
+        const supabase = createClient()
+        await supabase.auth.signOut()
+      }
+    } catch {
+      // ignore signout errors
+    } finally {
       setUser(null)
       window.location.href = '/'
-      return
     }
-    const { createClient } = await import('./supabase/client')
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    setUser(null)
-    window.location.href = '/'
   }
 
   const refreshUser = async () => {
