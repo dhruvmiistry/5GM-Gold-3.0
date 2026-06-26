@@ -41,7 +41,7 @@ export default function Navbar() {
 
       {/* Floating pill */}
       <div
-        className="pointer-events-auto w-full max-w-lg rounded-full flex items-center px-2 py-1.5"
+        className="pointer-events-auto w-full max-w-3xl rounded-full flex items-center px-2 py-1.5"
         style={{
           background: scrolled ? 'rgba(8,8,9,0.90)' : 'rgba(12,12,14,0.78)',
           backdropFilter: 'blur(28px)',
@@ -61,7 +61,7 @@ export default function Navbar() {
             <Link
               key={l.href}
               href={l.href}
-              className="px-4 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 hover:text-white hover:bg-[rgba(255,255,255,0.07)]"
+              className="px-4 py-1.5 text-[13px] font-medium rounded-full whitespace-nowrap transition-all duration-200 hover:text-white hover:bg-[rgba(255,255,255,0.07)]"
               style={{ color: 'var(--text-secondary)' }}
             >
               {l.label}
@@ -73,7 +73,7 @@ export default function Navbar() {
         <div className="hidden md:block w-px h-4 mx-2" style={{ background: 'rgba(255,255,255,0.1)' }} />
 
         {/* Desktop — CTAs */}
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-1.5 flex-shrink-0">
           {user ? (
             <Link
               href="/dashboard"
@@ -126,7 +126,7 @@ export default function Navbar() {
 
       {/* Mobile dropdown */}
       <div
-        className="pointer-events-auto w-full max-w-lg mt-2 rounded-2xl overflow-hidden"
+        className="pointer-events-auto w-full max-w-3xl mt-2 rounded-2xl overflow-hidden"
         style={{
           maxHeight: open ? '420px' : '0px',
           opacity: open ? 1 : 0,

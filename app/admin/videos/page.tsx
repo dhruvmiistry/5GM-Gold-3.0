@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { Plus, Search, Edit2, Trash2, Loader2, X, Play, Upload, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Loader2, X, Play, Upload, RefreshCw, CheckCircle, AlertCircle, ImageIcon } from 'lucide-react'
 import { muxThumbnailUrl } from '@/lib/mux'
 
 type Video = {
@@ -75,6 +75,13 @@ export default function AdminVideosPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Thumbnail state
+  const [thumbnailMode, setThumbnailMode] = useState<'url' | 'file'>('url')
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  const [thumbnailUploading, setThumbnailUploading] = useState(false)
+  const thumbnailFileRef = useRef<HTMLInputElement>(null)
+
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
 
   const fetchVideos = useCallback(async () => {
@@ -112,6 +119,12 @@ export default function AdminVideosPage() {
   }, [])
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
+
+  const handleThumbnailFile = (file: File) => {
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file'); return }
+    setThumbnailFile(file)
+    setThumbnailPreview(URL.createObjectURL(file))
+  }
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('video/')) { showToast('Please upload a video file'); return }
@@ -181,6 +194,9 @@ export default function AdminVideosPage() {
     setUploadId(null)
     setMuxAssetId(null)
     setMuxPlaybackId(null)
+    setThumbnailMode('url')
+    setThumbnailFile(null)
+    setThumbnailPreview(null)
     setPanelOpen(true)
   }
 
@@ -199,12 +215,33 @@ export default function AdminVideosPage() {
     setMuxAssetId(v.mux_asset_id)
     setMuxPlaybackId(v.mux_playback_id)
     setUploadState(v.mux_playback_id ? 'ready' : v.processing_status === 'errored' ? 'error' : v.mux_upload_id ? 'processing' : 'idle')
+    setThumbnailMode('url')
+    setThumbnailFile(null)
+    setThumbnailPreview(null)
     setPanelOpen(true)
   }
 
   const handleSave = async () => {
     if (!form.title || !form.slug) return
     setSaving(true)
+
+    let resolvedThumbnailUrl = form.thumbnail_url
+    if (thumbnailMode === 'file' && thumbnailFile) {
+      setThumbnailUploading(true)
+      const fd = new FormData()
+      fd.append('file', thumbnailFile)
+      const res = await fetch('/api/admin/upload-thumbnail', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        resolvedThumbnailUrl = data.url
+      } else {
+        showToast(data.error || 'Thumbnail upload failed')
+        setSaving(false)
+        setThumbnailUploading(false)
+        return
+      }
+      setThumbnailUploading(false)
+    }
 
     const selectedSection = SECTIONS.find(s => s.label === form.section) ?? SECTIONS[0]
     const body = {
@@ -221,7 +258,7 @@ export default function AdminVideosPage() {
       mux_playback_id: muxPlaybackId || null,
       mux_upload_id: uploadId || null,
       processing_status: uploadState === 'ready' ? 'ready' : uploadState === 'processing' ? 'preparing' : uploadState === 'error' ? 'errored' : 'none',
-      thumbnail_url: form.thumbnail_url || (muxPlaybackId ? muxThumbnailUrl(muxPlaybackId) : null),
+      thumbnail_url: resolvedThumbnailUrl || (muxPlaybackId ? muxThumbnailUrl(muxPlaybackId) : null),
     }
 
     if (editing) {
@@ -507,11 +544,69 @@ export default function AdminVideosPage() {
                 )}
               </div>
 
-              {/* Thumbnail override */}
+              {/* Thumbnail */}
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Custom Thumbnail URL <span className="normal-case text-[#3a3a42]">(optional — uses Mux auto-thumbnail if blank)</span></label>
-                <input value={form.thumbnail_url} onChange={e => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
-                  placeholder="https://…" className="input-dark w-full text-sm" />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] uppercase tracking-widest text-[#3a3a42]">
+                    Thumbnail <span className="normal-case">(optional)</span>
+                  </label>
+                  <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {(['url', 'file'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setThumbnailMode(mode)}
+                        className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition-all"
+                        style={thumbnailMode === mode
+                          ? { background: 'rgba(201,168,76,0.12)', color: '#c9a84c' }
+                          : { background: 'transparent', color: '#5a5a66' }}
+                      >
+                        {mode === 'url' ? 'URL' : 'File'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {thumbnailMode === 'url' ? (
+                  <input
+                    value={form.thumbnail_url}
+                    onChange={e => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
+                    placeholder="https://… (leave blank to use Mux auto-thumbnail)"
+                    className="input-dark w-full text-sm"
+                  />
+                ) : (
+                  <div>
+                    <div
+                      onClick={() => thumbnailFileRef.current?.click()}
+                      className="relative flex flex-col items-center justify-center gap-2 py-6 rounded-xl cursor-pointer transition-all"
+                      style={{
+                        border: '2px dashed rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.02)',
+                      }}
+                    >
+                      <ImageIcon size={18} className="text-[#5a5a66]" />
+                      <p className="text-[#5a5a66] text-xs">{thumbnailFile ? thumbnailFile.name : 'Click to choose an image'}</p>
+                      <input
+                        ref={thumbnailFileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleThumbnailFile(f) }}
+                      />
+                    </div>
+                    {thumbnailPreview && (
+                      <div className="relative mt-2 w-full aspect-video rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <Image src={thumbnailPreview} alt="Thumbnail preview" fill className="object-cover" />
+                        <button
+                          onClick={() => { setThumbnailFile(null); setThumbnailPreview(null) }}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
+                          style={{ background: 'rgba(0,0,0,0.7)', color: 'white' }}
+                        >
+                          <X size={11} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Metadata fields */}
@@ -578,8 +673,8 @@ export default function AdminVideosPage() {
               <button onClick={handleSave} disabled={saving || !form.title || !form.slug || uploadState === 'uploading'}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
                 style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
-                {saving ? <Loader2 size={14} className="animate-spin" /> : null}
-                {editing ? 'Save Changes' : 'Save Video'}
+                {(saving || thumbnailUploading) ? <Loader2 size={14} className="animate-spin" /> : null}
+                {thumbnailUploading ? 'Uploading thumbnail…' : editing ? 'Save Changes' : 'Save Video'}
               </button>
               {uploadState === 'processing' && (
                 <p className="text-center text-[#5a5a66] text-xs mt-2">You can save now — video will be ready shortly</p>
