@@ -1,6 +1,7 @@
 'use client'
 
 import { BarChart2, BookOpen, Eye, Radio, Shield, TrendingUp, Zap } from 'lucide-react'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HeroSection from '@/components/HeroSection'
