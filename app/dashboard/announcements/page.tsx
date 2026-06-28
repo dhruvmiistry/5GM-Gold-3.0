@@ -1,8 +1,10 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Bell, Megaphone, Settings, Star, Heart } from 'lucide-react'
-import { mockAnnouncements } from '@/lib/mockData'
+import { getAnnouncements } from '@/lib/data'
+import type { Announcement } from '@/lib/mockData'
 import { formatDate } from '@/lib/utils'
 import Badge from '@/components/Badge'
 
@@ -24,6 +26,9 @@ const stagger = {
 }
 
 export default function AnnouncementsPage() {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  useEffect(() => { getAnnouncements().then(setAnnouncements) }, [])
+
   return (
     <div className="dashboard-bg min-h-full">
       <div className="max-w-3xl mx-auto px-6 md:px-8 py-8 md:py-10 space-y-8">
@@ -46,7 +51,7 @@ export default function AnnouncementsPage() {
           animate="show"
           className="space-y-3"
         >
-          {mockAnnouncements.map(announcement => {
+          {announcements.map(announcement => {
             const config = typeConfig[announcement.type]
             const Icon = config?.icon ?? Megaphone
             return (

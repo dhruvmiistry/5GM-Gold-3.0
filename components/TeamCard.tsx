@@ -113,6 +113,8 @@ export default function TeamCard({ member, index = 0 }: TeamCardProps) {
           <h3 className="text-white font-semibold text-[15px] leading-snug">{member.name}</h3>
         </div>
 
+        <p className="text-[#5a5a66] text-[11px] leading-relaxed">{member.bio}</p>
+
         <div className="h-px w-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
 
         {/* Socials */}

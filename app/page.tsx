@@ -100,7 +100,8 @@ export default function HomePage() {
                   { category: 'Discipline', title: 'How emotional trading destroys consistency', trader: 'Albin', time: '20:34', isNew: false },
                   { category: 'Psychology', title: 'The greed cycle that blows funded accounts', trader: 'Mubz', time: '15:56', isNew: false },
                 ].map((v, i) => (
-                  <div
+                  <Link
+                    href="/free-access"
                     key={i}
                     className="group flex items-center gap-4 p-4 rounded-2xl card card-gold card-lift cursor-pointer"
                     style={{ opacity: 1 - i * 0.12, transform: `translateX(${i * 6}px)` }}
@@ -134,7 +135,7 @@ export default function HomePage() {
                         <div className="h-full rounded-full bg-[#c9a84c] opacity-40" style={{ width: `${[65, 40, 25][i]}%` }} />
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -143,12 +144,12 @@ export default function HomePage() {
       </section>
 
       {/* Team */}
-      <section className="min-h-screen flex flex-col justify-center py-16 px-6 scroll-mt-24" id="team">
+      <section className="min-h-screen flex flex-col justify-center py-16 px-6 scroll-mt-16" id="team">
         <div className="max-w-7xl mx-auto w-full">
           <div className="text-center mb-10">
             <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Analysts</p>
             <h2 className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] tracking-tight mb-4">
-              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Four analysts.</span>
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Four mentors.</span>
               <br />
               <span className="font-display italic text-gold-gradient">One private platform.</span>
             </h2>
@@ -156,7 +157,7 @@ export default function HomePage() {
               Each analyst covers distinct instruments and market structures. Collectively — one ecosystem.
             </p>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {mockTeam.map((member, i) => (
               <TeamCard key={member.id} member={member} index={i} />
             ))}
@@ -167,8 +168,9 @@ export default function HomePage() {
 
       <CTASection
         badge="Free Access"
-        title="Enter the platform. Free."
-        subtitle="No pricing. No obligation. Access weekly analyst videos from inside the 5GM private platform."
+        title="Enter the platform."
+        titleAccent="Free."
+        subtitle="No pricing. No obligation. Access weekly videos from inside the 5GM private platform."
         primaryLabel="Create Free Account"
         primaryHref="/signup"
         secondaryLabel="Sign In"

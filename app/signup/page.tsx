@@ -120,7 +120,7 @@ export default function SignupPage() {
                 type={showPass ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Min. 6 characters"
+                placeholder="Min. 8 characters"
                 className="input-dark pr-12"
                 autoComplete="new-password"
               />

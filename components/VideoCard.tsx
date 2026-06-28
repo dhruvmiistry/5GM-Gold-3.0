@@ -19,9 +19,10 @@ const categoryColor: Record<string, 'gold' | 'green' | 'muted'> = {
 }
 
 export default function VideoCard({ video, onPlay }: VideoCardProps) {
-  const thumbnailSrc = video.mux_playback_id
-    ? `https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5`
-    : null
+  const thumbnailSrc = video.thumbnail_url
+    ?? (video.mux_playback_id
+      ? `https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5`
+      : null)
 
   const initials = (video.analyst_name ?? 'A')
     .split(' ')

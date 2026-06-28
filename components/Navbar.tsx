@@ -10,7 +10,7 @@ const navLinks = [
   { label: 'Home', href: '/' },
   { label: 'Platform', href: '/#platform' },
   { label: 'About', href: '/#about' },
-  { label: 'Analysts', href: '/#team' },
+  { label: 'Mentors', href: '/#team' },
 ]
 
 export default function Navbar() {

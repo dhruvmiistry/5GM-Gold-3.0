@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-[rgba(255,255,255,0.06)] bg-[#0a0a0b]">
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div className="flex flex-col md:flex-row justify-between gap-12 mb-12">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
@@ -35,26 +35,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Content */}
-          <div>
-            <h4 className="text-[#8e8e9a] text-xs font-semibold uppercase tracking-wider mb-4">Content</h4>
-            <ul className="space-y-3">
-              {[
-                'Weekly Outlooks',
-                'Live Sessions',
-                'Development Modules',
-                'Strategy Vault',
-                'Market Breakdowns',
-              ].map(l => (
-                <li key={l}>
-                  <span className="text-[#5a5a66] text-sm flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-[rgba(201,168,76,0.3)]" />
-                    {l}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         <div className="gradient-line mb-8" />

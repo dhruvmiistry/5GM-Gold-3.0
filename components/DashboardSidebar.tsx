@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
   { label: 'Strategy Vault',    href: '/dashboard/strategy-vault',     icon: Shield,          locked: true },
   { label: 'Market Breakdowns', href: '/dashboard/market-breakdowns',  icon: BarChart2,       locked: true },
   { label: 'Revision Material', href: '/dashboard/revision-material',  icon: BookMarked,      locked: true },
-  { label: 'Announcements',     href: '/dashboard/announcements',      icon: Bell,            locked: false, badge: '2' },
+  { label: 'Announcements',     href: '/dashboard/announcements',      icon: Bell,            locked: false, badge: '1' },
   { label: 'Settings',          href: '/dashboard/settings',           icon: Settings,        locked: false },
 ]
 

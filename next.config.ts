@@ -33,11 +33,10 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
-      // Cache static assets aggressively
-      {
-        source: "/_next/static/(.*)",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
+      // Cache static assets aggressively (production only — dev uses stable chunk filenames that hot-reload)
+      ...(process.env.NODE_ENV === "production"
+        ? [{ source: "/_next/static/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] }]
+        : []),
       // Cache public images
       {
         source: "/(.*)\\.(png|jpg|jpeg|webp|svg|ico|gif)",

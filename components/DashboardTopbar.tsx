@@ -54,10 +54,10 @@ export default function DashboardTopbar({ onMenuToggle, title }: DashboardTopbar
       <div className="flex items-center gap-1.5">
 
         {/* Bell */}
-        <button className="relative w-8 h-8 rounded-lg flex items-center justify-center text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all">
+        <Link href="/dashboard/announcements" className="relative w-8 h-8 rounded-lg flex items-center justify-center text-[#8e8e9a] hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all">
           <Bell size={15} strokeWidth={1.75} />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-        </button>
+        </Link>
 
         {/* User menu */}
         <div className="relative" ref={menuRef}>

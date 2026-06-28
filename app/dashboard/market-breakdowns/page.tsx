@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { mockMarketBreakdowns, Video } from '@/lib/mockData'
 import { DbVideo } from '@/lib/types'
 import VideoCard from '@/components/VideoCard'
 import { formatDuration, formatDate } from '@/lib/utils'
-import { Play, Lock } from 'lucide-react'
+import { Play, Lock, X } from 'lucide-react'
+import MuxPlayer from '@/components/MuxPlayer'
 import Badge from '@/components/Badge'
 
 const adaptToDb = (v: Video): DbVideo => ({
@@ -136,7 +137,53 @@ export default function MarketBreakdownsPage() {
 
       </div>
 
-      {/* Mux player would go here when market breakdowns are connected to the DB */}
+      {/* Mux player modal */}
+      <AnimatePresence>
+        {playingVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+            style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setPlayingVideo(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="w-full max-w-4xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-white font-medium text-sm leading-snug">{playingVideo.title}</p>
+                  {playingVideo.analyst_name && (
+                    <p className="text-[#5a5a66] text-xs mt-0.5">{playingVideo.analyst_name}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setPlayingVideo(null)}
+                  className="ml-4 w-8 h-8 rounded-lg flex items-center justify-center text-[#5a5a66] hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition-all shrink-0"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {playingVideo.mux_playback_id ? (
+                <MuxPlayer playbackId={playingVideo.mux_playback_id} title={playingVideo.title} />
+              ) : (
+                <div
+                  className="w-full aspect-video rounded-2xl flex items-center justify-center"
+                  style={{ background: 'rgba(17,17,19,0.9)', border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  <p className="text-[#5a5a66] text-sm">Video coming soon.</p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

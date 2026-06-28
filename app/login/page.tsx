@@ -107,14 +107,7 @@ function LoginForm() {
         </button>
       </form>
 
-      {/* Divider */}
-      <div className="flex items-center gap-4 my-6">
-        <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
-        <span className="text-[#5a5a66] text-xs">or</span>
-        <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
-      </div>
-
-      <p className="text-center text-sm text-[#5a5a66]">
+      <p className="text-center text-sm text-[#5a5a66] mt-6">
         No account?{' '}
         <Link href="/signup" className="text-[#c9a84c] hover:text-[#e8c96d] transition-colors font-medium">
           Create free account

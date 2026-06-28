@@ -81,15 +81,15 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* ── Latest Briefings ──────────────────────────────── */}
+        {/* ── Latest Videos ──────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.18, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
         >
           <div className="flex items-end justify-between mb-6">
             <div>
-              <p className="section-label mb-1.5">This week</p>
-              <h2 className="text-white font-medium text-lg tracking-tight">Latest Briefings</h2>
+              <p className="section-label mb-1.5">{latestAnnouncement?.title ?? 'This week'}</p>
+              <h2 className="text-white font-medium text-lg tracking-tight">Latest Videos</h2>
             </div>
             <Link href="/dashboard/free-videos"
               className="flex items-center gap-1.5 text-xs text-[#c9a84c] hover:text-[#e8c96d] transition-colors font-medium"
@@ -177,12 +177,21 @@ function VideoCard({ video }: { video: Video }) {
       <div className="aspect-video relative overflow-hidden"
         style={{ background: 'radial-gradient(ellipse at 60% 30%, rgba(201,168,76,0.04) 0%, #0d0d0f 65%)' }}
       >
-        <div className="absolute inset-0 flex items-end justify-center pb-3 gap-px opacity-15">
-          {Array.from({ length: 30 }).map((_, j) => (
-            <div key={j} className="bg-[#c9a84c] rounded-full"
-              style={{ width: '2px', height: `${12 + Math.sin(j * 0.7) * 18 + (j % 3) * 7}%` }} />
-          ))}
-        </div>
+        {video.thumbnail && (
+          <img
+            src={video.thumbnail}
+            alt={video.title}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        )}
+        {!video.thumbnail && (
+          <div className="absolute inset-0 flex items-end justify-center pb-3 gap-px opacity-15">
+            {Array.from({ length: 30 }).map((_, j) => (
+              <div key={j} className="bg-[#c9a84c] rounded-full"
+                style={{ width: '2px', height: `${12 + Math.sin(j * 0.7) * 18 + (j % 3) * 7}%` }} />
+            ))}
+          </div>
+        )}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
             style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.28)' }}

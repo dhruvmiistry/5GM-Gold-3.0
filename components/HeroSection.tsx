@@ -56,7 +56,7 @@ export default function HeroSection() {
               className="text-[#8e8e9a] text-lg font-light leading-relaxed max-w-lg mb-10"
             >
               Built for traders serious about refinement, discipline, and execution.
-              Three free analyst videos every week.
+              Three free videos every week.
             </motion.p>
 
             <motion.div

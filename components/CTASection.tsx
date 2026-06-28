@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react'
 
 interface CTASectionProps {
   title: string
+  titleAccent?: string
   subtitle: string
   primaryLabel: string
   primaryHref: string
@@ -14,7 +15,7 @@ interface CTASectionProps {
   badge?: string
 }
 
-export default function CTASection({ title, subtitle, primaryLabel, primaryHref, secondaryLabel, secondaryHref, badge }: CTASectionProps) {
+export default function CTASection({ title, titleAccent, subtitle, primaryLabel, primaryHref, secondaryLabel, secondaryHref, badge }: CTASectionProps) {
   return (
     <section className="relative py-32 overflow-hidden">
       {/* Gold glow */}
@@ -40,9 +41,13 @@ export default function CTASection({ title, subtitle, primaryLabel, primaryHref,
           viewport={{ once: true }}
           className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6"
         >
-          <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Enter the platform.</span>
-          <br />
-          <span className="font-display italic text-gold-gradient">Free.</span>
+          <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>{title}</span>
+          {titleAccent && (
+            <>
+              <br />
+              <span className="font-display italic text-gold-gradient">{titleAccent}</span>
+            </>
+          )}
         </motion.h2>
 
         <motion.p
