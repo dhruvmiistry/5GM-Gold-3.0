@@ -80,30 +80,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Shared helper: fetch profile row, create it if missing ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function minimalUserFromSession(authUser: any): User {
+    return {
+      id: authUser.id,
+      name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Member',
+      email: authUser.email ?? '',
+      role: 'member',
+      plan: 'free',
+      accountType: 'free',
+      access_level: 'free',
+      experience: authUser.user_metadata?.trading_experience ?? '',
+      joinedDate: authUser.created_at ?? new Date().toISOString(),
+      avatar_url: null,
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function fetchOrCreateProfile(supabase: any, authUser: any) {
-    let { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authUser.id)
-      .single()
+    // 4-second timeout — if Supabase REST hangs, callers fall back to session data
+    const timer = new Promise<null>(r => setTimeout(() => r(null), 4000))
+
+    let { data: profile } = await Promise.race([
+      supabase.from('profiles').select('*').eq('id', authUser.id).single()
+        .then((r: { data: unknown }) => r),
+      timer.then(() => ({ data: null })),
+    ]) as { data: unknown }
 
     if (!profile) {
       const fullName =
         authUser.user_metadata?.full_name ||
         authUser.email?.split('@')[0] ||
         'Member'
-      const { data: created } = await supabase
-        .from('profiles')
-        .insert({
+      const result = await Promise.race([
+        supabase.from('profiles').insert({
           id: authUser.id,
           email: authUser.email,
           full_name: fullName,
           trading_experience: authUser.user_metadata?.trading_experience ?? null,
           signup_source: authUser.user_metadata?.signup_source ?? 'web',
-        })
-        .select()
-        .single()
-      profile = created
+        }).select().single().then((r: { data: unknown }) => r),
+        timer.then(() => ({ data: null })),
+      ]) as { data: unknown }
+      profile = result.data
     }
     return profile
   }
@@ -115,16 +133,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { createClient } = await import('./supabase/client')
       const supabase = createClient()
-      // Use getSession() (reads local storage, no network call) rather than
-      // getUser() — the caller has just authenticated so the session is
-      // guaranteed fresh. getUser() was causing Safari to hang here.
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { setUser(null); return }
 
       const profile = await fetchOrCreateProfile(supabase, session.user)
-      if (profile) setUser(profileToUser(profile, session.user.email ?? ''))
+      // Fall back to session data if profile timed out — ensures dashboard
+      // never sees user=null after a successful login
+      setUser(profile
+        ? profileToUser(profile, session.user.email ?? '')
+        : minimalUserFromSession(session.user)
+      )
     } catch {
-      // Network/DB error — leave existing session intact rather than logging the user out
+      // silent — leave existing state intact
     }
   }
 
@@ -159,7 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               if (session?.user) {
                 const profile = await fetchOrCreateProfile(supabase, session.user)
-                if (profile && mounted) setUser(profileToUser(profile, session.user.email ?? ''))
+                if (mounted) setUser(profile
+                  ? profileToUser(profile, session.user.email ?? '')
+                  : minimalUserFromSession(session.user)
+                )
               } else {
                 if (mounted) setUser(null)
               }
