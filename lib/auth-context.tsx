@@ -145,34 +145,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { createClient } = await import('./supabase/client')
         const supabase = createClient()
 
-        // 1. Validate the JWT — race with a timeout so a slow/unreachable Supabase
-        //    doesn't leave isLoading=true forever, causing an infinite spinner
-        const timeout = new Promise<{ data: { user: null } }>(resolve =>
-          setTimeout(() => resolve({ data: { user: null } }), 5000)
-        )
-        const { data: { user: authUser } } = await Promise.race([
-          supabase.auth.getUser(),
-          timeout,
-        ])
-        if (authUser && mounted) {
-          const profile = await fetchOrCreateProfile(supabase, authUser)
-          if (profile && mounted) setUser(profileToUser(profile, authUser.email ?? ''))
-        }
-
-        // 2. Only NOW mark loading as done — user is already set if they're logged in
-        if (mounted) setIsLoading(false)
-
-        // 3. Listen for future auth changes (token refresh, sign in from another tab, sign out)
-        //    Skip INITIAL_SESSION — we already handled it above via getUser()
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          if (!mounted || event === 'INITIAL_SESSION') return
-          if (session?.user) {
-            const profile = await fetchOrCreateProfile(supabase, session.user)
-            if (profile && mounted) setUser(profileToUser(profile, session.user.email ?? ''))
-          } else {
-            if (mounted) setUser(null)
+        // Use onAuthStateChange instead of getUser() for initialisation.
+        // INITIAL_SESSION fires immediately from the local cookie with no network
+        // call, so the UI resolves in milliseconds instead of waiting for a server
+        // round-trip. Supabase then silently validates/refreshes the token in the
+        // background — if the token is expired it fires SIGNED_OUT (which also
+        // clears the cookie, breaking any proxy redirect loop).
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return
+            try {
+              if (session?.user) {
+                const profile = await fetchOrCreateProfile(supabase, session.user)
+                if (profile && mounted) setUser(profileToUser(profile, session.user.email ?? ''))
+              } else {
+                if (mounted) setUser(null)
+              }
+            } catch {
+              // profile fetch failed — leave user as-is
+            } finally {
+              // Clear loading state after the initial session is known
+              if (event === 'INITIAL_SESSION' && mounted) setIsLoading(false)
+            }
           }
-        })
+        )
 
         return () => subscription.unsubscribe()
       } catch {
