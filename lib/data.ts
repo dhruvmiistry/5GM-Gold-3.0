@@ -34,7 +34,7 @@ function mapVideo(row: any): Video {
     id: row.id,
     title: row.title,
     description: row.description ?? '',
-    thumbnail: row.thumbnail_url ?? null,
+    thumbnail: row.thumbnail_url ?? (row.mux_playback_id ? `https://image.mux.com/${row.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5` : null),
     duration: parseDuration(row.duration),
     category: row.category ?? 'General',
     releaseDate: row.release_date ?? row.created_at,
