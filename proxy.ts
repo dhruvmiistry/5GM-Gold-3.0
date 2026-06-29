@@ -21,11 +21,6 @@ export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   const loggedIn = hasSessionCookie(request)
 
-  // Redirect authenticated users away from auth pages
-  if ((path === '/login' || path === '/signup') && loggedIn) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
   // Protect /dashboard routes
   if (path.startsWith('/dashboard') && !loggedIn) {
     const loginUrl = new URL('/login', request.url)
