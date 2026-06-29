@@ -31,6 +31,7 @@ export async function proxy(request: NextRequest) {
   )
 
   let user = null
+  let supabaseReachable = true
   try {
     const result = await Promise.race([
       supabase.auth.getUser(),
@@ -38,9 +39,14 @@ export async function proxy(request: NextRequest) {
     ]) as Awaited<ReturnType<typeof supabase.auth.getUser>>
     user = result.data.user
   } catch {
-    // Supabase unreachable — treat as unauthenticated, don't block the request
+    // Supabase unreachable — don't make auth decisions, let client-side handle it
+    supabaseReachable = false
   }
   const path = request.nextUrl.pathname
+
+  // If Supabase is unreachable we can't verify auth — pass the request through
+  // rather than creating a redirect loop (server says unauthenticated, client says authenticated)
+  if (!supabaseReachable) return supabaseResponse
 
   // Redirect authenticated users away from auth pages
   if ((path === '/login' || path === '/signup') && user) {

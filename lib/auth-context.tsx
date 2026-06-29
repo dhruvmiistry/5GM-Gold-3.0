@@ -145,9 +145,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { createClient } = await import('./supabase/client')
         const supabase = createClient()
 
-        // 1. Validate the JWT with the Supabase Auth server (getUser vs getSession avoids
-        //    trusting a locally-cached token that may have been tampered with)
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        // 1. Validate the JWT — race with a timeout so a slow/unreachable Supabase
+        //    doesn't leave isLoading=true forever, causing an infinite spinner
+        const timeout = new Promise<{ data: { user: null } }>(resolve =>
+          setTimeout(() => resolve({ data: { user: null } }), 5000)
+        )
+        const { data: { user: authUser } } = await Promise.race([
+          supabase.auth.getUser(),
+          timeout,
+        ])
         if (authUser && mounted) {
           const profile = await fetchOrCreateProfile(supabase, authUser)
           if (profile && mounted) setUser(profileToUser(profile, authUser.email ?? ''))
