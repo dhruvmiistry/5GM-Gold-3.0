@@ -115,12 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { createClient } = await import('./supabase/client')
       const supabase = createClient()
-      // getUser() validates the JWT with Supabase Auth server (unlike getSession())
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser) { setUser(null); return }
+      // Use getSession() (reads local storage, no network call) rather than
+      // getUser() — the caller has just authenticated so the session is
+      // guaranteed fresh. getUser() was causing Safari to hang here.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) { setUser(null); return }
 
-      const profile = await fetchOrCreateProfile(supabase, authUser)
-      if (profile) setUser(profileToUser(profile, authUser.email ?? ''))
+      const profile = await fetchOrCreateProfile(supabase, session.user)
+      if (profile) setUser(profileToUser(profile, session.user.email ?? ''))
     } catch {
       // Network/DB error — leave existing session intact rather than logging the user out
     }
