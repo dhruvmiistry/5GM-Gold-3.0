@@ -48,13 +48,28 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ data, total: count ?? 0, page, pageSize: PAGE_SIZE })
 }
 
+const ALLOWED_PROFILE_FIELDS = new Set([
+  'role', 'plan', 'access_level', 'admin_notes', 'full_name', 'trading_experience',
+])
+
 export async function PATCH(request: NextRequest) {
   const adminUser = await verifyAdmin()
   if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { userId, updates } = await request.json()
+  if (!userId || typeof updates !== 'object' || updates === null) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
+
+  const safeUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([key]) => ALLOWED_PROFILE_FIELDS.has(key))
+  )
+  if (Object.keys(safeUpdates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
   const admin = createAdminClient()
-  const { data, error } = await admin.from('profiles').update(updates).eq('id', userId).select().single()
+  const { data, error } = await admin.from('profiles').update(safeUpdates).eq('id', userId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }

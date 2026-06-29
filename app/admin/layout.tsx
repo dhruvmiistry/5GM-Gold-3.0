@@ -27,7 +27,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!isLoading && user && user.role !== 'admin') router.push('/dashboard')
+    if (isLoading) return
+    if (!user) router.push('/login')
+    else if (user.role !== 'admin') router.push('/dashboard')
   }, [user, isLoading, router])
 
   if (isLoading) {
@@ -37,6 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     )
   }
+
+  if (!user || user.role !== 'admin') return null
 
   const currentLabel = Object.entries(pageLabels).find(([key]) =>
     key === '/admin' ? pathname === '/admin' : pathname.startsWith(key)

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import DashboardTopbar from '@/components/DashboardTopbar'
+import { Loader2 } from 'lucide-react'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -16,6 +17,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/login')
     }
   }, [user, isLoading, router])
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-[#0a0a0b] items-center justify-center">
+        <Loader2 size={22} className="text-[#c9a84c] animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="flex h-screen bg-[#0a0a0b] overflow-hidden">

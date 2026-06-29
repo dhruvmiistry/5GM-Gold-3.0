@@ -85,18 +85,20 @@ export default function AdminAnnouncementsPage() {
     setSaving(true)
     const body = { ...form, scheduled_for: form.scheduled_for || null }
     if (editing) {
-      await fetch('/api/admin/announcements', {
+      const res = await fetch('/api/admin/announcements', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, updates: body }),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Update failed'); setSaving(false); return }
       showToast('Announcement updated')
     } else {
-      await fetch('/api/admin/announcements', {
+      const res = await fetch('/api/admin/announcements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Create failed'); setSaving(false); return }
       showToast('Announcement created')
     }
     setSaving(false)
@@ -107,12 +109,13 @@ export default function AdminAnnouncementsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this announcement?')) return
     setDeleting(id)
-    await fetch('/api/admin/announcements', {
+    const res = await fetch('/api/admin/announcements', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
     setDeleting(null)
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Delete failed'); return }
     showToast('Announcement deleted')
     fetchItems()
   }

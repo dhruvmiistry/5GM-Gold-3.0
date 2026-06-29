@@ -24,18 +24,22 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [videos, setVideos] = useState<Video[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [greeting, setGreeting] = useState('Good morning')
 
   useEffect(() => {
     getFreeVideos().then(setVideos)
     getAnnouncements().then(setAnnouncements)
   }, [])
 
+  // Set greeting on client only to avoid SSR/client hydration mismatch (timezone differs)
+  useEffect(() => {
+    const hour = new Date().getHours()
+    setGreeting(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening')
+  }, [])
+
   const latestVideos = videos.slice(0, 3)
   const olderVideos = videos.slice(3, 6)
   const latestAnnouncement = announcements.find(a => a.isNew) ?? announcements[0]
-
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="dashboard-bg min-h-full">

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
@@ -15,7 +16,12 @@ const experienceOptions = [
 ]
 
 export default function SignupPage() {
-  const { signup, pendingConfirmation } = useAuth()
+  const { signup, pendingConfirmation, user, isLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading && user) router.replace('/dashboard')
+  }, [user, isLoading, router])
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

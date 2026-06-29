@@ -55,13 +55,15 @@ function parseDuration(d: string | null): number {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapAnnouncement(row: any): Announcement {
+  const published = row.published_at ?? row.created_at
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
   return {
     id: row.id,
     title: row.title,
     body: row.body,
-    date: row.published_at ?? row.created_at,
+    date: published,
     type: 'platform',
-    isNew: true,
+    isNew: published ? new Date(published).getTime() > sevenDaysAgo : false,
   }
 }
 
@@ -217,18 +219,26 @@ export async function getRevisionMaterials() {
 export async function saveEmailPreferences(userId: string, prefs: {
   email_consent: boolean
   marketing_opt_in: boolean
-}) {
-  if (!SUPABASE_CONFIGURED) return
+}): Promise<{ success: boolean; error?: string }> {
+  if (!SUPABASE_CONFIGURED) return { success: true }
   try {
     const supabase = await getSupabase()
-    await supabase.from('profiles').update(prefs).eq('id', userId)
-  } catch { /* silent */ }
+    const { error } = await supabase.from('profiles').update(prefs).eq('id', userId)
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 }
 
-export async function saveProfileName(userId: string, full_name: string) {
-  if (!SUPABASE_CONFIGURED) return
+export async function saveProfileName(userId: string, full_name: string): Promise<{ success: boolean; error?: string }> {
+  if (!SUPABASE_CONFIGURED) return { success: true }
   try {
     const supabase = await getSupabase()
-    await supabase.from('profiles').update({ full_name }).eq('id', userId)
-  } catch { /* silent */ }
+    const { error } = await supabase.from('profiles').update({ full_name }).eq('id', userId)
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 }

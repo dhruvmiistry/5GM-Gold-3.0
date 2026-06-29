@@ -37,6 +37,8 @@ export default function SettingsPage() {
   const [nameEditing, setNameEditing] = useState(false)
   const [nameSaving, setNameSaving] = useState(false)
   const [nameSaved, setNameSaved] = useState(false)
+  const [nameError, setNameError] = useState('')
+  const [prefsError, setPrefsError] = useState('')
 
   const [emailUpdates, setEmailUpdates] = useState(user?.email_consent ?? true)
   const [marketing, setMarketing] = useState(user?.marketing_opt_in ?? false)
@@ -48,9 +50,14 @@ export default function SettingsPage() {
   const handleSaveName = async () => {
     if (!user || !nameValue.trim()) return
     setNameSaving(true)
-    await saveProfileName(user.id, nameValue.trim())
-    await refreshUser()
+    setNameError('')
+    const result = await saveProfileName(user.id, nameValue.trim())
     setNameSaving(false)
+    if (!result.success) {
+      setNameError(result.error ?? 'Failed to save name')
+      return
+    }
+    await refreshUser()
     setNameEditing(false)
     setNameSaved(true)
     setTimeout(() => setNameSaved(false), 2000)
@@ -59,8 +66,13 @@ export default function SettingsPage() {
   const handleSavePrefs = async () => {
     if (!user) return
     setPrefsSaving(true)
-    await saveEmailPreferences(user.id, { email_consent: emailUpdates, marketing_opt_in: marketing })
+    setPrefsError('')
+    const result = await saveEmailPreferences(user.id, { email_consent: emailUpdates, marketing_opt_in: marketing })
     setPrefsSaving(false)
+    if (!result.success) {
+      setPrefsError(result.error ?? 'Failed to save preferences')
+      return
+    }
     setPrefsSaved(true)
     setTimeout(() => setPrefsSaved(false), 2000)
   }
@@ -134,6 +146,9 @@ export default function SettingsPage() {
                       Edit
                     </button>
                   </div>
+                )}
+                {nameError && (
+                  <p className="mt-1.5 text-xs text-[#e85757]">{nameError}</p>
                 )}
               </div>
 
@@ -225,6 +240,9 @@ export default function SettingsPage() {
               {prefsSaving ? <Loader2 size={13} className="animate-spin" /> : prefsSaved ? <Check size={13} /> : null}
               {prefsSaved ? 'Saved!' : 'Save Preferences'}
             </button>
+            {prefsError && (
+              <p className="mt-2 text-xs text-[#e85757]">{prefsError}</p>
+            )}
           </div>
         </motion.div>
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
+
+const WEBHOOK_TOLERANCE_SECONDS = 300
 
 function verifyMuxSignature(body: string, signature: string, secret: string): boolean {
   try {
@@ -8,9 +10,17 @@ function verifyMuxSignature(body: string, signature: string, secret: string): bo
     const timestamp = parts['t']
     const v1 = parts['v1']
     if (!timestamp || !v1) return false
+
+    // Reject webhooks older than 5 minutes to block replay attacks
+    const age = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10)
+    if (age > WEBHOOK_TOLERANCE_SECONDS) return false
+
     const payload = `${timestamp}.${body}`
-    const expected = createHmac('sha256', secret).update(payload).digest('hex')
-    return expected === v1
+    const expectedHex = createHmac('sha256', secret).update(payload).digest('hex')
+    const expectedBuf = Buffer.from(expectedHex, 'hex')
+    const receivedBuf = Buffer.from(v1.padEnd(expectedHex.length, '0'), 'hex')
+    if (expectedBuf.length !== receivedBuf.length) return false
+    return timingSafeEqual(expectedBuf, receivedBuf)
   } catch {
     return false
   }

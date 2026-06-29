@@ -102,6 +102,7 @@ export default function AdminVideosPage() {
     if (pollRef.current) clearInterval(pollRef.current)
     pollRef.current = setInterval(async () => {
       const res = await fetch(`/api/admin/mux?uploadId=${uid}`)
+      if (!res.ok) return
       const { upload, asset } = await res.json()
       if (asset?.status === 'ready') {
         clearInterval(pollRef.current!)
@@ -262,18 +263,20 @@ export default function AdminVideosPage() {
     }
 
     if (editing) {
-      await fetch('/api/admin/videos', {
+      const res = await fetch('/api/admin/videos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, updates: body }),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Update failed'); setSaving(false); return }
       showToast('Video updated')
     } else {
-      await fetch('/api/admin/videos', {
+      const res = await fetch('/api/admin/videos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Create failed'); setSaving(false); return }
       showToast('Video created')
     }
 
@@ -285,12 +288,13 @@ export default function AdminVideosPage() {
   const handleDelete = async (video: Video) => {
     if (!confirm('Delete this video? This cannot be undone.')) return
     setDeleting(video.id)
-    await fetch('/api/admin/mux', {
+    const res = await fetch('/api/admin/mux', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ videoId: video.id, muxAssetId: video.mux_asset_id }),
     })
     setDeleting(null)
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Delete failed'); return }
     showToast('Video deleted')
     fetchVideos()
   }

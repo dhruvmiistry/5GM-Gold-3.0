@@ -81,18 +81,20 @@ export default function AdminLiveSessionsPage() {
       replay_url: form.replay_url || null,
     }
     if (editing) {
-      await fetch('/api/admin/live-sessions', {
+      const res = await fetch('/api/admin/live-sessions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, updates: body }),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Update failed'); setSaving(false); return }
       showToast('Session updated')
     } else {
-      await fetch('/api/admin/live-sessions', {
+      const res = await fetch('/api/admin/live-sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Create failed'); setSaving(false); return }
       showToast('Session scheduled')
     }
     setSaving(false)
@@ -103,22 +105,24 @@ export default function AdminLiveSessionsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this session?')) return
     setDeleting(id)
-    await fetch('/api/admin/live-sessions', {
+    const res = await fetch('/api/admin/live-sessions', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
     setDeleting(null)
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Delete failed'); return }
     showToast('Session deleted')
     fetchSessions()
   }
 
   const setStatus = async (s: LiveSession, status: string) => {
-    await fetch('/api/admin/live-sessions', {
+    const res = await fetch('/api/admin/live-sessions', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: s.id, updates: { status } }),
     })
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Status update failed'); return }
     showToast(`Status set to ${status.replace('_', ' ')}`)
     fetchSessions()
   }

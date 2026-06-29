@@ -1,14 +1,19 @@
 'use client'
 
-import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 function LoginForm() {
-  const { login } = useAuth()
+  const { login, user, isLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading && user) router.replace('/dashboard')
+  }, [user, isLoading, router])
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

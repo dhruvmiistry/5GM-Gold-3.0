@@ -68,18 +68,20 @@ export default function AdminResourcesPage() {
       module_id: form.module_id || null,
     }
     if (editing) {
-      await fetch('/api/admin/resources', {
+      const res = await fetch('/api/admin/resources', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, updates: body }),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Update failed'); setSaving(false); return }
       showToast('Resource updated')
     } else {
-      await fetch('/api/admin/resources', {
+      const res = await fetch('/api/admin/resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Create failed'); setSaving(false); return }
       showToast('Resource created')
     }
     setSaving(false)
@@ -90,12 +92,13 @@ export default function AdminResourcesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this resource?')) return
     setDeleting(id)
-    await fetch('/api/admin/resources', {
+    const res = await fetch('/api/admin/resources', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
     setDeleting(null)
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Delete failed'); return }
     showToast('Resource deleted')
     fetchResources()
   }

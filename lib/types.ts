@@ -8,5 +8,5 @@ export interface DbVideo {
   release_date: string | null
   analyst_name: string | null
   mux_playback_id: string | null
-  processing_status: string
+  processing_status: 'none' | 'preparing' | 'ready' | 'errored'
 }

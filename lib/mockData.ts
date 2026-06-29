@@ -171,21 +171,6 @@ export const mockTeam: TeamMember[] = [
     },
   },
   {
-    id: '1',
-    name: 'Ibby',
-    role: 'Mentor',
-    bio: 'Paid over six figures from prop firms, bringing years of consistent performance and practical insight to every trader.',
-    specialty: ['Gold', 'DXY', 'Macro'],
-    image: '/mentor1.png',
-    imagePosition: '35% 0%',
-    imageScale: 1.15,
-    socials: {
-      instagram: 'https://instagram.com/',
-      tiktok: 'https://www.tiktok.com/@ibby5gm',
-      youtube: 'https://www.youtube.com/@Ibby5GM',
-    },
-  },
-  {
     id: '4',
     name: 'Mubz',
     role: 'Mentor',
@@ -198,6 +183,21 @@ export const mockTeam: TeamMember[] = [
       instagram: 'https://www.instagram.com/trademubz/',
       tiktok: 'https://www.tiktok.com/@trademubz',
       youtube: 'https://www.youtube.com/@TradeMubz',
+    },
+  },
+  {
+    id: '1',
+    name: 'Ibby',
+    role: 'Mentor',
+    bio: 'Paid over six figures from prop firms, bringing years of consistent performance and practical insight to every trader.',
+    specialty: ['Gold', 'DXY', 'Macro'],
+    image: '/mentor1.png',
+    imagePosition: '35% 0%',
+    imageScale: 1.15,
+    socials: {
+      instagram: 'https://instagram.com/',
+      tiktok: 'https://www.tiktok.com/@ibby5gm',
+      youtube: 'https://www.youtube.com/@Ibby5GM',
     },
   },
   {

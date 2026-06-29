@@ -4,7 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const rawNext = searchParams.get('next') ?? '/dashboard'
+  // Block open redirects — only allow same-origin relative paths
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
 
   if (code) {
     const supabase = await createClient()
@@ -14,6 +16,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Something went wrong — send them to login with an error hint
   return NextResponse.redirect(`${origin}/login?error=confirmation_failed`)
 }

@@ -78,27 +78,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pendingConfirmation, setPendingConfirmation] = useState(false)
   const router = useRouter()
 
-  // ── Fetch profile from Supabase and set user ──────────
+  // ── Shared helper: fetch profile row, create it if missing ──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function fetchOrCreateProfile(supabase: any, authUser: any) {
+    let { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single()
+
+    if (!profile) {
+      const fullName =
+        authUser.user_metadata?.full_name ||
+        authUser.email?.split('@')[0] ||
+        'Member'
+      const { data: created } = await supabase
+        .from('profiles')
+        .insert({
+          id: authUser.id,
+          email: authUser.email,
+          full_name: fullName,
+          trading_experience: authUser.user_metadata?.trading_experience ?? null,
+          signup_source: authUser.user_metadata?.signup_source ?? 'web',
+        })
+        .select()
+        .single()
+      profile = created
+    }
+    return profile
+  }
+
+  // ── Fetch profile and set user (called after login / refreshUser) ─
   const fetchAndSetUser = async () => {
     if (!SUPABASE_CONFIGURED) return
 
     try {
       const { createClient } = await import('./supabase/client')
       const supabase = createClient()
+      // getUser() validates the JWT with Supabase Auth server (unlike getSession())
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) { setUser(null); return }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .single()
-
-      if (profile) {
-        setUser(profileToUser(profile, authUser.email ?? ''))
-      }
+      const profile = await fetchOrCreateProfile(supabase, authUser)
+      if (profile) setUser(profileToUser(profile, authUser.email ?? ''))
     } catch {
-      setUser(null)
+      // Network/DB error — leave existing session intact rather than logging the user out
     }
   }
 
@@ -121,32 +145,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { createClient } = await import('./supabase/client')
         const supabase = createClient()
 
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user && mounted) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          if (profile && mounted) setUser(profileToUser(profile, session.user.email ?? ''))
+        // 1. Validate the JWT with the Supabase Auth server (getUser vs getSession avoids
+        //    trusting a locally-cached token that may have been tampered with)
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (authUser && mounted) {
+          const profile = await fetchOrCreateProfile(supabase, authUser)
+          if (profile && mounted) setUser(profileToUser(profile, authUser.email ?? ''))
         }
 
-        // Listen for auth changes
+        // 2. Only NOW mark loading as done — user is already set if they're logged in
+        if (mounted) setIsLoading(false)
+
+        // 3. Listen for future auth changes (token refresh, sign in from another tab, sign out)
+        //    Skip INITIAL_SESSION — we already handled it above via getUser()
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          if (!mounted) return
+          if (!mounted || event === 'INITIAL_SESSION') return
           if (session?.user) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single()
-            if (profile) setUser(profileToUser(profile, session.user.email ?? ''))
+            const profile = await fetchOrCreateProfile(supabase, session.user)
+            if (profile && mounted) setUser(profileToUser(profile, session.user.email ?? ''))
           } else {
-            setUser(null)
+            if (mounted) setUser(null)
           }
         })
 
-        if (mounted) setIsLoading(false)
         return () => subscription.unsubscribe()
       } catch {
         if (mounted) setIsLoading(false)
@@ -232,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         const { createClient } = await import('./supabase/client')
         const supabase = createClient()
-        await supabase.auth.signOut()
+        await supabase.auth.signOut({ scope: 'global' })
       }
     } catch {
       // ignore signout errors

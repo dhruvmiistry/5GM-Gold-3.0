@@ -16,7 +16,10 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/admin/stats').then(r => r.json()).then(d => { setStats(d); setLoading(false) }).catch(() => setLoading(false))
+    fetch('/api/admin/stats')
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
+      .then(d => { setStats(d); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const statCards = stats ? [
