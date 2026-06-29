@@ -7,6 +7,19 @@ import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
+function LoginFallback() {
+  return (
+    <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
+      <Link href="/" className="mb-2">
+        <Image src="/logo.png" alt="5GM Gold" width={140} height={44} className="h-10 w-auto object-contain" />
+      </Link>
+      <div className="mt-16">
+        <Loader2 size={22} className="text-[#c9a84c] animate-spin" />
+      </div>
+    </div>
+  )
+}
+
 function LoginForm() {
   const { login, user, isLoading } = useAuth()
   const router = useRouter()
@@ -130,7 +143,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center px-4 relative">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[rgba(201,168,76,0.04)] blur-[100px] rounded-full pointer-events-none" />
-      <Suspense>
+      <Suspense fallback={<LoginFallback />}>
         <LoginForm />
       </Suspense>
     </div>

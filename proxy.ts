@@ -1,4 +1,3 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const supabaseConfigured = !!(
@@ -7,81 +6,39 @@ const supabaseConfigured = !!(
   !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
 )
 
-export async function proxy(request: NextRequest) {
-  // Skip if Supabase is not yet configured (local dev without .env.local)
+// Optimistic session check — look for a Supabase auth cookie without calling
+// the Supabase server. Per Next.js 16 docs, proxy should NOT do slow data
+// fetching; actual auth verification happens inside page/API code.
+function hasSessionCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some(
+    c => c.name.startsWith('sb-') && c.name.includes('-auth-token')
+  )
+}
+
+export function proxy(request: NextRequest) {
   if (!supabaseConfigured) return NextResponse.next()
 
-  let supabaseResponse = NextResponse.next({ request })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  let user = null
-  let supabaseReachable = true
-  try {
-    const result = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-    ]) as Awaited<ReturnType<typeof supabase.auth.getUser>>
-    user = result.data.user
-  } catch {
-    // Supabase unreachable — don't make auth decisions, let client-side handle it
-    supabaseReachable = false
-  }
   const path = request.nextUrl.pathname
-
-  // If Supabase is unreachable we can't verify auth — pass the request through
-  // rather than creating a redirect loop (server says unauthenticated, client says authenticated)
-  if (!supabaseReachable) return supabaseResponse
+  const loggedIn = hasSessionCookie(request)
 
   // Redirect authenticated users away from auth pages
-  if ((path === '/login' || path === '/signup') && user) {
+  if ((path === '/login' || path === '/signup') && loggedIn) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Protect /dashboard routes
-  if (path.startsWith('/dashboard') && !user) {
+  if (path.startsWith('/dashboard') && !loggedIn) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', path)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Protect /admin routes
-  if (path.startsWith('/admin')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    let profile = null
-    try {
-      const profileResult = await Promise.race([
-        supabase.from('profiles').select('role').eq('id', user.id).single(),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-      ]) as { data: { role: string } | null }
-      profile = profileResult.data
-    } catch {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
+  // Protect /admin routes (optimistic — role check happens server-side)
+  if (path.startsWith('/admin') && !loggedIn) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return supabaseResponse
+  return NextResponse.next()
 }
 
 export const config = {
