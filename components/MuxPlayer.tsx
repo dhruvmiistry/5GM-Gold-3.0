@@ -17,6 +17,7 @@ export default function MuxPlayer({ playbackId, title, thumbnailUrl, accentColor
         metadata={{ video_title: title }}
         poster={thumbnailUrl}
         accentColor={accentColor}
+        renditionOrder="desc"
         style={{ width: '100%', aspectRatio: '16/9' }}
       />
     </div>
