@@ -97,33 +97,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function fetchOrCreateProfile(supabase: any, authUser: any) {
-    // 4-second timeout — if Supabase REST hangs, callers fall back to session data
-    const timer = new Promise<null>(r => setTimeout(() => r(null), 4000))
+    const makeTimer = (ms: number) => new Promise<{ data: null }>(r => setTimeout(() => r({ data: null }), ms))
 
-    let { data: profile } = await Promise.race([
-      supabase.from('profiles').select('*').eq('id', authUser.id).single()
-        .then((r: { data: unknown }) => r),
-      timer.then(() => ({ data: null })),
+    const { data: profile } = await Promise.race([
+      supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+      makeTimer(5000),
     ]) as { data: unknown }
 
-    if (!profile) {
-      const fullName =
-        authUser.user_metadata?.full_name ||
-        authUser.email?.split('@')[0] ||
-        'Member'
-      const result = await Promise.race([
-        supabase.from('profiles').insert({
-          id: authUser.id,
-          email: authUser.email,
-          full_name: fullName,
-          trading_experience: authUser.user_metadata?.trading_experience ?? null,
-          signup_source: authUser.user_metadata?.signup_source ?? 'web',
-        }).select().single().then((r: { data: unknown }) => r),
-        timer.then(() => ({ data: null })),
-      ]) as { data: unknown }
-      profile = result.data
-    }
-    return profile
+    if (profile) return profile
+
+    // Profile missing — new user, try to create it
+    const fullName =
+      authUser.user_metadata?.full_name ||
+      authUser.email?.split('@')[0] ||
+      'Member'
+    const { data: newProfile } = await Promise.race([
+      supabase.from('profiles').insert({
+        id: authUser.id,
+        email: authUser.email,
+        full_name: fullName,
+        trading_experience: authUser.user_metadata?.trading_experience ?? null,
+        signup_source: authUser.user_metadata?.signup_source ?? 'web',
+      }).select().single(),
+      makeTimer(5000),
+    ]) as { data: unknown }
+
+    return newProfile ?? null
   }
 
   // ── Fetch profile and set user (called after login / refreshUser) ─
@@ -179,17 +178,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               if (session?.user) {
                 const profile = await fetchOrCreateProfile(supabase, session.user)
-                if (mounted) setUser(profile
-                  ? profileToUser(profile, session.user.email ?? '')
-                  : minimalUserFromSession(session.user)
-                )
+                if (!mounted) return
+                if (profile) {
+                  setUser(profileToUser(profile, session.user.email ?? ''))
+                } else {
+                  // Profile timed out — show minimal user to unblock the UI,
+                  // then retry in the background to pick up the real role/plan
+                  setUser(minimalUserFromSession(session.user))
+                  setTimeout(async () => {
+                    if (!mounted) return
+                    try {
+                      const { data } = await supabase
+                        .from('profiles').select('*').eq('id', session.user.id).single()
+                      if (data && mounted) setUser(profileToUser(data, session.user.email ?? ''))
+                    } catch {}
+                  }, 1500)
+                }
               } else {
                 if (mounted) setUser(null)
               }
             } catch {
               // profile fetch failed — leave user as-is
             } finally {
-              // Clear loading state after the initial session is known
               if (event === 'INITIAL_SESSION' && mounted) setIsLoading(false)
             }
           }
@@ -229,7 +239,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error.message.includes('Too many requests'))         throw new Error('Too many attempts. Please wait a few minutes.')
       throw new Error(error.message)
     }
-    await fetchAndSetUser()
+    // Don't await fetchAndSetUser() here — the SIGNED_IN event from onAuthStateChange
+    // already handles fetching the profile and setting user state
     router.push('/dashboard')
   }
 
@@ -269,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    await fetchAndSetUser()
+    // Don't await fetchAndSetUser() here — SIGNED_IN event handles it
     router.push('/dashboard')
   }
 
