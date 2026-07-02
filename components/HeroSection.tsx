@@ -13,7 +13,7 @@ const HERO_IMAGES = ['/bani.png', '/mubz.png', '/ab.png']
 const HERO_IMAGE_CROPS: Record<string, { objectPosition: string; scale: number }> = {
   '/bani.png': { objectPosition: '50% 50%', scale: 1.15 },
   '/mubz.png': { objectPosition: '50% 50%', scale: 1 },
-  '/ab.png': { objectPosition: '65% 50%', scale: 1.1 },
+  '/ab.png': { objectPosition: '25% 50%', scale: 1.15 },
 }
 
 export default function HeroSection() {
