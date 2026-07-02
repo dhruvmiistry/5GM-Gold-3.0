@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { Plus, Search, Edit2, Trash2, Loader2, X, Play, Upload, RefreshCw, CheckCircle, AlertCircle, ImageIcon } from 'lucide-react'
 import { muxThumbnailUrl } from '@/lib/mux'
+import { londonTimeToUTCISOString, utcISOStringToLondonLocal } from '@/lib/utils'
 
 type Video = {
   id: string; title: string; slug: string; description: string | null
@@ -211,7 +212,7 @@ export default function AdminVideosPage() {
       category: v.category ?? 'Free Video',
       analyst_name: v.analyst_name ?? '', module_id: v.module_id ?? '',
       access_level: v.access_level, status: v.status,
-      release_date: v.release_date ? v.release_date.slice(0, 16) : '',
+      release_date: v.release_date ? utcISOStringToLondonLocal(v.release_date) : '',
     })
     setMuxAssetId(v.mux_asset_id)
     setMuxPlaybackId(v.mux_playback_id)
@@ -251,7 +252,7 @@ export default function AdminVideosPage() {
       description: form.description || null,
       analyst_name: form.analyst_name || null,
       module_id: form.module_id || null,
-      release_date: form.release_date || null,
+      release_date: form.release_date ? londonTimeToUTCISOString(form.release_date) : null,
       status: form.status,
       category: selectedSection.category,
       access_level: selectedSection.access_level,
@@ -666,7 +667,7 @@ export default function AdminVideosPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Release Date</label>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Release Date (UK time)</label>
                 <input type="datetime-local" value={form.release_date}
                   onChange={e => setForm(p => ({ ...p, release_date: e.target.value }))}
                   className="input-dark w-full text-sm" />

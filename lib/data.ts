@@ -98,17 +98,27 @@ function mapModule(row: any): Module {
 
 // ── Public API ────────────────────────────────────────────
 
+// Teaser fields only — deliberately excludes mux_playback_id/mux_asset_id so a
+// video scheduled-but-not-yet-released can be shown with a countdown without
+// exposing anything a client could use to watch it early. Actual playback
+// access is gated separately in app/api/videos/free/route.ts.
+const FREE_VIDEO_TEASER_COLUMNS = 'id, title, description, thumbnail_url, duration, category, release_date, created_at, analyst_name, access_level'
+
 export async function getFreeVideos(): Promise<Video[]> {
   if (!SUPABASE_CONFIGURED) return mockFreeVideos
   try {
     const supabase = await getSupabase()
     const { data } = await supabase
       .from('videos')
-      .select('*')
+      .select(FREE_VIDEO_TEASER_COLUMNS)
       .eq('access_level', 'free')
-      .eq('status', 'published')
-      .order('release_date', { ascending: false })
-    return data?.length ? data.map(mapVideo) : mockFreeVideos
+      .in('status', ['published', 'scheduled'])
+    if (!data?.length) return mockFreeVideos
+    // Sort by effective release date (release_date, falling back to created_at —
+    // same fallback mapVideo uses for display). Doing this in JS rather than via
+    // .order('release_date') because a plain DB-level sort puts legacy rows with
+    // no release_date ahead of newly-scheduled ones instead of by actual recency.
+    return data.map(mapVideo).sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
   } catch { return mockFreeVideos }
 }
 

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { getFreeVideos, getAnnouncements } from '@/lib/data'
 import { formatDate, formatDuration } from '@/lib/utils'
-import { Play, Bell, ArrowRight } from 'lucide-react'
+import { Play, Bell, ArrowRight, Lock } from 'lucide-react'
 import Badge from '@/components/Badge'
 import type { Video, Announcement } from '@/lib/mockData'
 
@@ -155,7 +155,90 @@ export default function DashboardPage() {
   )
 }
 
+function useCountdown(targetMs: number) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, targetMs - Date.now()))
+  useEffect(() => {
+    if (remaining <= 0) return
+    const id = setInterval(() => setRemaining(Math.max(0, targetMs - Date.now())), 1000)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetMs, remaining <= 0])
+  return remaining
+}
+
 function VideoCard({ video }: { video: Video }) {
+  const releaseTime = new Date(video.releaseDate).getTime()
+  const [isPending] = useState(() => releaseTime > Date.now())
+  if (isPending) return <PendingVideoCard video={video} releaseTime={releaseTime} />
+  return <UnlockedVideoCard video={video} />
+}
+
+function PendingVideoCard({ video, releaseTime }: { video: Video; releaseTime: number }) {
+  const remaining = useCountdown(releaseTime)
+  if (remaining <= 0) return <UnlockedVideoCard video={video} />
+
+  const totalSeconds = Math.floor(remaining / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const pad = (n: number) => n.toString().padStart(2, '0')
+
+  const releaseLabel = new Date(releaseTime).toLocaleString('en-GB', {
+    timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit',
+    day: 'numeric', month: 'short',
+  })
+
+  return (
+    <div className="relative flex flex-col rounded-2xl overflow-hidden h-full"
+      style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(201,168,76,0.18)' }}
+    >
+      <div className="aspect-video relative overflow-hidden">
+        {video.thumbnail && (
+          <img
+            src={video.thumbnail}
+            alt={video.title}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: 'blur(9px) brightness(0.4) saturate(0.7)', transform: 'scale(1.12)' }}
+          />
+        )}
+        <div className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse at center, rgba(10,10,11,0.35) 0%, rgba(10,10,11,0.88) 100%)' }}
+        />
+
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-3 text-center">
+          <motion.div
+            animate={{ boxShadow: ['0 0 0 0 rgba(201,168,76,0.35)', '0 0 0 10px rgba(201,168,76,0)'] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+            className="w-11 h-11 rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(201,168,76,0.14)', border: '1px solid rgba(201,168,76,0.4)' }}
+          >
+            <Lock size={16} className="text-[#e8c96d]" strokeWidth={2} />
+          </motion.div>
+
+          <div className="font-mono text-[15px] font-semibold tracking-wider" style={{ color: '#e8c96d' }}>
+            {days > 0 ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`}
+          </div>
+          <p className="text-[10px] uppercase tracking-widest text-[#8e8e9a]">
+            Unlocks {releaseLabel} UK
+          </p>
+        </div>
+      </div>
+
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="flex items-center gap-2 mb-2.5">
+          <Badge variant="gold">{video.category}</Badge>
+        </div>
+        <p className="text-white text-sm font-medium leading-snug line-clamp-2 flex-1">
+          {video.title}
+        </p>
+        <p className="text-[#5a5a66] text-[11px] mt-2.5">{video.trader}</p>
+      </div>
+    </div>
+  )
+}
+
+function UnlockedVideoCard({ video }: { video: Video }) {
   return (
     <Link href="/dashboard/free-videos"
       className="group flex flex-col rounded-2xl overflow-hidden h-full"
