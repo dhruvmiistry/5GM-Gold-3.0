@@ -24,6 +24,7 @@ interface AuthContextType {
   pendingConfirmation: boolean   // true after signup if email confirmation is required
   login: (email: string, password: string) => Promise<void>
   signup: (name: string, email: string, password: string, experience: string) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
 }
@@ -332,6 +333,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/dashboard')
   }
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!SUPABASE_CONFIGURED) {
+      await new Promise(r => setTimeout(r, 600))
+      return
+    }
+    if (!user?.email) throw new Error('You must be signed in to change your password.')
+
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+
+    // Re-verify the current password before allowing a change — updateUser()
+    // works off the active session alone, so without this check anyone with
+    // an unattended open session could lock the real owner out.
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    })
+    if (verifyError) throw new Error('Current password is incorrect.')
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      if (error.message.includes('Password should be')) throw new Error('Password must be at least 8 characters.')
+      if (error.message.includes('different from the old password')) throw new Error('New password must be different from your current password.')
+      throw new Error(error.message)
+    }
+  }
+
   const logout = async () => {
     try {
       if (!SUPABASE_CONFIGURED) {
@@ -354,7 +382,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, changePassword, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

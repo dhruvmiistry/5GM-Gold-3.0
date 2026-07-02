@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { saveEmailPreferences, saveProfileName } from '@/lib/data'
-import { User, Mail, Bell, Shield, LogOut, Check, Loader2 } from 'lucide-react'
+import { User, Mail, Bell, Shield, Lock, LogOut, Check, Loader2, Eye, EyeOff } from 'lucide-react'
 import Badge from '@/components/Badge'
 
 const fadeUp = {
@@ -30,7 +30,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 export default function SettingsPage() {
-  const { user, logout, refreshUser } = useAuth()
+  const { user, logout, refreshUser, changePassword } = useAuth()
   const hasGoldAccess = user?.plan === 'gold' || user?.role === 'admin'
 
   const [nameValue, setNameValue] = useState(user?.name ?? '')
@@ -39,6 +39,14 @@ export default function SettingsPage() {
   const [nameSaved, setNameSaved] = useState(false)
   const [nameError, setNameError] = useState('')
   const [prefsError, setPrefsError] = useState('')
+
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordSaved, setPasswordSaved] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
 
   const [emailUpdates, setEmailUpdates] = useState(user?.email_consent ?? true)
   const [marketing, setMarketing] = useState(user?.marketing_opt_in ?? false)
@@ -61,6 +69,31 @@ export default function SettingsPage() {
     setNameEditing(false)
     setNameSaved(true)
     setTimeout(() => setNameSaved(false), 2000)
+  }
+
+  const handleChangePassword = async () => {
+    setPasswordError('')
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.')
+      return
+    }
+    setPasswordSaving(true)
+    try {
+      await changePassword(currentPassword, newPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordSaved(true)
+      setTimeout(() => setPasswordSaved(false), 2500)
+    } catch (e) {
+      setPasswordError(e instanceof Error ? e.message : 'Failed to update password')
+    } finally {
+      setPasswordSaving(false)
+    }
   }
 
   const handleSavePrefs = async () => {
@@ -204,6 +237,73 @@ export default function SettingsPage() {
                   Gold premium access is in the final stages of preparation. You will be notified when access opens.
                 </p>
               </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Password */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.14, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
+          className="rounded-2xl overflow-hidden" style={sectionStyle}
+        >
+          <div className="p-6">
+            <h2 className="text-white font-medium text-sm flex items-center gap-2 mb-5">
+              <Lock size={14} className="text-[#c9a84c]" strokeWidth={1.75} />
+              Password
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[#3a3a42] text-[10.5px] uppercase tracking-widest mb-1.5">Current Password</label>
+                <input
+                  type={showPasswords ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className="input-dark w-full text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[#3a3a42] text-[10.5px] uppercase tracking-widest mb-1.5">New Password</label>
+                <input
+                  type={showPasswords ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Min. 8 characters"
+                  autoComplete="new-password"
+                  className="input-dark w-full text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[#3a3a42] text-[10.5px] uppercase tracking-widest mb-1.5">Confirm New Password</label>
+                <input
+                  type={showPasswords ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  className="input-dark w-full text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPasswords(!showPasswords)}
+                className="flex items-center gap-1.5 text-[#5a5a66] hover:text-[#8e8e9a] text-xs transition-colors"
+              >
+                {showPasswords ? <EyeOff size={12} /> : <Eye size={12} />}
+                {showPasswords ? 'Hide passwords' : 'Show passwords'}
+              </button>
+            </div>
+
+            <button onClick={handleChangePassword}
+              disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
+              className="mt-5 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(201,168,76,0.1)] text-[#c9a84c] text-sm font-medium hover:bg-[rgba(201,168,76,0.16)] transition-all disabled:opacity-60"
+              style={{ border: '1px solid rgba(201,168,76,0.2)' }}
+            >
+              {passwordSaving ? <Loader2 size={13} className="animate-spin" /> : passwordSaved ? <Check size={13} /> : null}
+              {passwordSaved ? 'Password updated!' : 'Update Password'}
+            </button>
+            {passwordError && (
+              <p className="mt-2 text-xs text-[#e85757]">{passwordError}</p>
             )}
           </div>
         </motion.div>
