@@ -125,6 +125,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return newProfile ?? null
   }
 
+  // ── Retry the profile fetch in the background with backoff ──
+  // Used whenever fetchOrCreateProfile times out — keeps retrying instead of
+  // leaving the user stuck on minimal session data (name/plan/role) until a
+  // manual refresh, which is more likely to happen when the DB is under load.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function scheduleProfileRetry(supabase: any, userId: string, email: string, isMounted: () => boolean, onUser: (u: User) => void) {
+    const delays = [1500, 4000, 8000]
+    let attempt = 0
+    const tryFetch = async () => {
+      if (!isMounted()) return
+      try {
+        const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+        if (data) { if (isMounted()) onUser(profileToUser(data, email)); return }
+      } catch {}
+      if (++attempt < delays.length && isMounted()) setTimeout(tryFetch, delays[attempt])
+    }
+    setTimeout(tryFetch, delays[0])
+  }
+
   // ── Fetch profile and set user (called after login / refreshUser) ─
   const fetchAndSetUser = async () => {
     if (!SUPABASE_CONFIGURED) return
@@ -173,35 +192,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // background — if the token is expired it fires SIGNED_OUT (which also
         // clears the cookie, breaking any proxy redirect loop).
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
+          (event, session) => {
             if (!mounted) return
-            try {
+
+            // Never call another supabase-js method (fetchOrCreateProfile etc.)
+            // synchronously inside this callback — it needs the current session,
+            // which contends for the same internal auth lock this callback is
+            // running under, and stalls for several seconds until our own
+            // Promise.race timeout gives up. Defer to the next tick to release
+            // the lock first. (Known supabase-js gotcha, not a network/DB issue.)
+
+            // INITIAL_SESSION resolves from the cached cookie with no network call —
+            // unblock the UI immediately with minimal session data instead of making
+            // the spinner wait on the profile DB round-trip, then upgrade in the
+            // background once the full profile arrives.
+            if (event === 'INITIAL_SESSION') {
               if (session?.user) {
-                const profile = await fetchOrCreateProfile(supabase, session.user)
-                if (!mounted) return
-                if (profile) {
-                  setUser(profileToUser(profile, session.user.email ?? ''))
-                } else {
-                  // Profile timed out — show minimal user to unblock the UI,
-                  // then retry in the background to pick up the real role/plan
-                  setUser(minimalUserFromSession(session.user))
-                  setTimeout(async () => {
+                setUser(minimalUserFromSession(session.user))
+                setIsLoading(false)
+                const retry = () => scheduleProfileRetry(supabase, session.user.id, session.user.email ?? '', () => mounted, setUser)
+                setTimeout(async () => {
+                  if (!mounted) return
+                  try {
+                    const profile = await fetchOrCreateProfile(supabase, session.user)
                     if (!mounted) return
-                    try {
-                      const { data } = await supabase
-                        .from('profiles').select('*').eq('id', session.user.id).single()
-                      if (data && mounted) setUser(profileToUser(data, session.user.email ?? ''))
-                    } catch {}
-                  }, 1500)
-                }
+                    if (profile) setUser(profileToUser(profile, session.user.email ?? ''))
+                    else retry()
+                  } catch {
+                    retry()
+                  }
+                }, 0)
               } else {
-                if (mounted) setUser(null)
+                setUser(null)
+                setIsLoading(false)
               }
-            } catch {
-              // profile fetch failed — leave user as-is
-            } finally {
-              if (event === 'INITIAL_SESSION' && mounted) setIsLoading(false)
+              return
             }
+
+            setTimeout(async () => {
+              if (!mounted) return
+              try {
+                if (session?.user) {
+                  const profile = await fetchOrCreateProfile(supabase, session.user)
+                  if (!mounted) return
+                  if (profile) {
+                    setUser(profileToUser(profile, session.user.email ?? ''))
+                  } else {
+                    // Profile timed out — show minimal user to unblock the UI,
+                    // then retry in the background to pick up the real role/plan
+                    setUser(minimalUserFromSession(session.user))
+                    scheduleProfileRetry(supabase, session.user.id, session.user.email ?? '', () => mounted, setUser)
+                  }
+                } else {
+                  if (mounted) setUser(null)
+                }
+              } catch {
+                // profile fetch failed — leave user as-is
+              }
+            }, 0)
           }
         )
 
