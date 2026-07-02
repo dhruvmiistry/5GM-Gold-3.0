@@ -1,11 +1,31 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Play } from 'lucide-react'
 
+const HERO_IMAGES = ['/bani.png', '/mubz.png', '/ab.png']
+
+// Box is landscape (~16:9), matching these photos' native aspect ratio,
+// so no crop compensation is needed — center crop for all three.
+const HERO_IMAGE_CROPS: Record<string, { objectPosition: string; scale: number }> = {
+  '/bani.png': { objectPosition: '50% 50%', scale: 1.15 },
+  '/mubz.png': { objectPosition: '50% 50%', scale: 1 },
+  '/ab.png': { objectPosition: '65% 50%', scale: 1.1 },
+}
+
 export default function HeroSection() {
+  const [heroImageIndex, setHeroImageIndex] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeroImageIndex(i => (i + 1) % HERO_IMAGES.length)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [])
+
   return (
     <section className="relative min-h-screen flex items-center hero-bg overflow-hidden pt-16">
       {/* Primary gold light source — top right, behind image */}
@@ -115,15 +135,33 @@ export default function HeroSection() {
             <div className="relative rounded-2xl overflow-hidden"
               style={{ border: '1px solid rgba(201,168,76,0.22)', boxShadow: '0 0 0 1px rgba(201,168,76,0.07), 0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(201,168,76,0.08)' }}>
 
-              <Image
-                src="/mentor3.png"
-                alt="5GM Gold Mentor"
-                width={640}
-                height={760}
-                className="w-full object-cover"
-                priority
-                style={{ filter: 'contrast(1.05) brightness(0.95)' }}
-              />
+              <div className="relative w-full" style={{ aspectRatio: '640 / 360' }}>
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={HERO_IMAGES[heroImageIndex]}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' }}
+                    className="absolute inset-0"
+                  >
+                    <Image
+                      src={HERO_IMAGES[heroImageIndex]}
+                      alt="5GM Gold Mentor"
+                      width={640}
+                      height={360}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      priority
+                      style={{
+                        filter: 'contrast(1.05) brightness(0.95)',
+                        objectPosition: HERO_IMAGE_CROPS[HERO_IMAGES[heroImageIndex]].objectPosition,
+                        transform: `scale(${HERO_IMAGE_CROPS[HERO_IMAGES[heroImageIndex]].scale})`,
+                        transformOrigin: HERO_IMAGE_CROPS[HERO_IMAGES[heroImageIndex]].objectPosition,
+                      }}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
               {/* bottom fade to bg */}
               <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,10,11,1) 0%, rgba(10,10,11,0.4) 25%, transparent 60%)' }} />
