@@ -18,6 +18,7 @@ const adaptToDb = (v: Video): DbVideo => ({
   duration: v.duration,
   category: v.category,
   release_date: v.releaseDate,
+  created_at: v.releaseDate,
   analyst_name: v.trader,
   mux_playback_id: null,
   processing_status: 'none',

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { getFreeVideos, getAnnouncements } from '@/lib/data'
 import { formatDate, formatDuration } from '@/lib/utils'
+import { useCountdown } from '@/lib/hooks'
 import { Play, Bell, ArrowRight, Lock } from 'lucide-react'
 import Badge from '@/components/Badge'
 import type { Video, Announcement } from '@/lib/mockData'
@@ -153,17 +154,6 @@ export default function DashboardPage() {
       </div>
     </div>
   )
-}
-
-function useCountdown(targetMs: number) {
-  const [remaining, setRemaining] = useState(() => Math.max(0, targetMs - Date.now()))
-  useEffect(() => {
-    if (remaining <= 0) return
-    const id = setInterval(() => setRemaining(Math.max(0, targetMs - Date.now())), 1000)
-    return () => clearInterval(id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetMs, remaining <= 0])
-  return remaining
 }
 
 function VideoCard({ video }: { video: Video }) {

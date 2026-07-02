@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Play, Clock } from 'lucide-react'
+import { Play, Clock, Lock } from 'lucide-react'
 import { DbVideo } from '@/lib/types'
 import { formatDuration, formatDate } from '@/lib/utils'
+import { useCountdown } from '@/lib/hooks'
 import Badge from './Badge'
 
 interface VideoCardProps {
@@ -19,6 +21,77 @@ const categoryColor: Record<string, 'gold' | 'green' | 'muted'> = {
 }
 
 export default function VideoCard({ video, onPlay }: VideoCardProps) {
+  const releaseTime = video.release_date ? new Date(video.release_date).getTime() : 0
+  const [isPending] = useState(() => releaseTime > Date.now())
+  if (isPending) return <PendingVideoCard video={video} releaseTime={releaseTime} />
+  return <UnlockedVideoCard video={video} onPlay={onPlay} />
+}
+
+function PendingVideoCard({ video, releaseTime }: { video: DbVideo; releaseTime: number }) {
+  const remaining = useCountdown(releaseTime)
+  if (remaining <= 0) return <UnlockedVideoCard video={video} onPlay={() => {}} />
+
+  const totalSeconds = Math.floor(remaining / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const pad = (n: number) => n.toString().padStart(2, '0')
+
+  const releaseLabel = new Date(releaseTime).toLocaleString('en-GB', {
+    timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit',
+    day: 'numeric', month: 'short',
+  })
+
+  return (
+    <div className="rounded-2xl overflow-hidden"
+      style={{ background: 'rgba(17,17,19,0.9)', border: '1px solid rgba(201,168,76,0.18)' }}
+    >
+      <div className="relative aspect-video bg-[#0d0d0f] overflow-hidden">
+        {video.thumbnail_url && (
+          <img
+            src={video.thumbnail_url}
+            alt={video.title}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: 'blur(9px) brightness(0.4) saturate(0.7)', transform: 'scale(1.12)' }}
+          />
+        )}
+        <div className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse at center, rgba(10,10,11,0.35) 0%, rgba(10,10,11,0.88) 100%)' }}
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-3 text-center">
+          <motion.div
+            animate={{ boxShadow: ['0 0 0 0 rgba(201,168,76,0.35)', '0 0 0 10px rgba(201,168,76,0)'] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+            className="w-12 h-12 rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(201,168,76,0.14)', border: '1px solid rgba(201,168,76,0.4)' }}
+          >
+            <Lock size={17} className="text-[#e8c96d]" strokeWidth={2} />
+          </motion.div>
+          <div className="font-mono text-base font-semibold tracking-wider" style={{ color: '#e8c96d' }}>
+            {days > 0 ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`}
+          </div>
+          <p className="text-[10px] uppercase tracking-widest text-[#8e8e9a]">
+            Unlocks {releaseLabel} UK
+          </p>
+        </div>
+      </div>
+
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          {video.category && (
+            <Badge variant={categoryColor[video.category] || 'muted'}>{video.category}</Badge>
+          )}
+        </div>
+        <h3 className="text-white text-sm font-medium leading-snug line-clamp-2">
+          {video.title}
+        </h3>
+      </div>
+    </div>
+  )
+}
+
+function UnlockedVideoCard({ video, onPlay }: VideoCardProps) {
   const thumbnailSrc = video.thumbnail_url
     ?? (video.mux_playback_id
       ? `https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5`
