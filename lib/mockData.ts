@@ -203,8 +203,8 @@ export const mockTeam: TeamMember[] = [
   {
     id: '5',
     name: 'IK',
-    role: 'Onboarding Manager',
-    bio: "Multi six-figure funded trader and one of 5GM's longest-standing mentors, helping members build confidence through the 5GM model.",
+    role: 'Mentor',
+    bio: '5GM onboarding manager and multi six-figure funded trader, guiding members through the 5GM model with clarity and confidence.',
     specialty: ['Onboarding', 'Member Support', 'Analysis'],
     image: '/mentor5.JPEG',
     imagePosition: '50% 100%',
