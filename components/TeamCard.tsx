@@ -89,6 +89,7 @@ export default function TeamCard({ member, index = 0 }: TeamCardProps) {
             style={{
               objectPosition: member.imagePosition ?? 'top center',
               transform: `scale(${member.imageScale ?? 1})`,
+              transformOrigin: member.imagePosition ?? 'center',
             }}
           />
         ) : (

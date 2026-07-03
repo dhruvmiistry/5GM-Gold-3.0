@@ -207,7 +207,8 @@ export const mockTeam: TeamMember[] = [
     bio: '5GM onboarding manager and multi six-figure funded trader, guiding members through the 5GM model with clarity and confidence.',
     specialty: ['Onboarding', 'Member Support', 'Analysis'],
     image: '/mentor5.JPEG',
-    imagePosition: '50% 100%',
+    imagePosition: '85% 78%',
+    imageScale: 1.3,
     socials: {
       instagram: 'https://www.instagram.com/fx_ik',
       tiktok: 'https://www.tiktok.com/@fx.ik',

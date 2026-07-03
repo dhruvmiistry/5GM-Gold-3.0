@@ -150,7 +150,7 @@ export default function HomePage() {
           <div className="text-center mb-10">
             <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Analysts</p>
             <h2 className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] tracking-tight mb-4">
-              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Four mentors.</span>
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Five mentors.</span>
               <br />
               <span className="font-display italic text-gold-gradient">One private platform.</span>
             </h2>
