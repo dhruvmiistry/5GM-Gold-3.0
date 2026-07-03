@@ -16,7 +16,7 @@ const experienceOptions = [
 ]
 
 export default function SignupPage() {
-  const { signup, pendingConfirmation, user, isLoading } = useAuth()
+  const { signup, resendConfirmation, pendingConfirmation, user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -29,6 +29,29 @@ export default function SignupPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showResend, setShowResend] = useState(false)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [resendError, setResendError] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setInterval(() => setResendCooldown(s => s - 1), 1000)
+    return () => clearInterval(t)
+  }, [resendCooldown])
+
+  const handleResend = async () => {
+    setResendState('sending')
+    setResendError('')
+    try {
+      await resendConfirmation(email)
+      setResendState('sent')
+      setResendCooldown(60)
+    } catch (err) {
+      setResendState('error')
+      setResendError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,13 +64,15 @@ export default function SignupPage() {
       return
     }
     setError('')
+    setShowResend(false)
     setLoading(true)
     try {
       await signup(name, email, password, experience)
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
-        setError('An account with this email already exists. Try signing in.')
+        setError('An account with this email already exists.')
+        setShowResend(true)
       } else if (msg) {
         setError(msg)
       } else {
@@ -75,6 +100,26 @@ export default function SignupPage() {
             Click it to activate your account.
           </p>
           <p className="text-[#3a3a46] text-xs mt-6">Didn&apos;t receive it? Check your spam folder.</p>
+
+          <div className="mt-6">
+            {resendState === 'sent' ? (
+              <p className="text-[#c9a84c] text-xs">
+                New link sent{resendCooldown > 0 ? ` — you can request another in ${resendCooldown}s` : ''}.
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendState === 'sending' || resendCooldown > 0}
+                className="text-xs text-[#c9a84c] hover:text-[#e8c96d] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resendState === 'sending' ? 'Sending...' : 'Resend confirmation email'}
+              </button>
+            )}
+            {resendState === 'error' && (
+              <p className="text-[#e85757] text-xs mt-2">{resendError}</p>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -160,9 +205,30 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-[#e85757] bg-[rgba(232,87,87,0.08)] border border-[rgba(232,87,87,0.2)] rounded-lg px-3 py-2.5">
-              {error}
-            </p>
+            <div className="text-sm text-[#e85757] bg-[rgba(232,87,87,0.08)] border border-[rgba(232,87,87,0.2)] rounded-lg px-3 py-2.5">
+              <p>{error}</p>
+              {showResend && (
+                <p className="mt-1.5 text-xs">
+                  <Link href="/login" className="text-[#c9a84c] hover:text-[#e8c96d] font-medium">Sign in</Link>
+                  {' '}if it&apos;s confirmed, or{' '}
+                  {resendState === 'sent' ? (
+                    <span className="text-[#c9a84c]">
+                      new link sent{resendCooldown > 0 ? ` (retry in ${resendCooldown}s)` : ''}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={resendState === 'sending' || resendCooldown > 0}
+                      className="text-[#c9a84c] hover:text-[#e8c96d] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {resendState === 'sending' ? 'sending...' : 'resend the confirmation email'}
+                    </button>
+                  )}
+                  {resendState === 'error' && <span className="block mt-1 text-[#e85757]">{resendError}</span>}
+                </p>
+              )}
+            </div>
           )}
 
           <button

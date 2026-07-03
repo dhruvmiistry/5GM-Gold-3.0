@@ -24,6 +24,7 @@ interface AuthContextType {
   pendingConfirmation: boolean   // true after signup if email confirmation is required
   login: (email: string, password: string) => Promise<void>
   signup: (name: string, email: string, password: string, experience: string) => Promise<void>
+  resendConfirmation: (email: string) => Promise<void>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
@@ -316,9 +317,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     })
     if (error) {
+      // Only fires for accounts that are already confirmed — for an unconfirmed
+      // account, signUp() on the same email instead 200s and issues a fresh
+      // confirmation token (rate-limited below), it does not error.
       if (error.message.includes('User already registered')) throw new Error('An account with this email already exists.')
       if (error.message.includes('Password should be'))      throw new Error('Password must be at least 8 characters.')
       if (error.message.includes('Unable to validate'))      throw new Error('Invalid email address.')
+      if (error.message.includes('you can only request this after') || error.message.includes('rate limit'))
+        throw new Error('A confirmation email was already sent — check your inbox, or wait a moment and try again.')
       if (error.message.includes('Too many requests'))       throw new Error('Too many signups from this device. Please try again later.')
       throw new Error(error.message)
     }
@@ -331,6 +337,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Don't await fetchAndSetUser() here — SIGNED_IN event handles it
     router.push('/dashboard')
+  }
+
+  // Sends a fresh confirmation link with a new token (invalidating the old one) —
+  // the way out for a user whose original link expired or never arrived. Same
+  // email-send rate limit bucket as signUp() (default: one send per ~60s).
+  const resendConfirmation = async (email: string) => {
+    if (!SUPABASE_CONFIGURED) {
+      await new Promise(r => setTimeout(r, 600))
+      return
+    }
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() })
+    if (error) {
+      if (error.message.includes('already confirmed'))   throw new Error('This email is already confirmed. Please sign in.')
+      if (error.message.includes('you can only request this after') || error.message.includes('rate limit'))
+        throw new Error('Please wait a minute before requesting another email.')
+      throw new Error(error.message)
+    }
   }
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
@@ -382,7 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, changePassword, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, resendConfirmation, changePassword, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

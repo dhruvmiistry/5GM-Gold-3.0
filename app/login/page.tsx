@@ -21,7 +21,7 @@ function LoginFallback() {
 }
 
 function LoginForm() {
-  const { login, user, isLoading } = useAuth()
+  const { login, resendConfirmation, user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -34,14 +34,25 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(
     searchParams.get('error') === 'confirmation_failed'
-      ? 'That confirmation link has expired or already been used. Please sign in or request a new one.'
+      ? 'That confirmation link has expired or already been used. Enter your email below and request a new one.'
       : ''
   )
+  const [needsConfirmation, setNeedsConfirmation] = useState(searchParams.get('error') === 'confirmation_failed')
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [resendError, setResendError] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setInterval(() => setResendCooldown(s => s - 1), 1000)
+    return () => clearInterval(t)
+  }, [resendCooldown])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password) { setError('Please fill in all fields.'); return }
     setError('')
+    setNeedsConfirmation(false)
     setLoading(true)
     try {
       await login(email, password)
@@ -49,6 +60,9 @@ function LoginForm() {
       const msg = err instanceof Error ? err.message : ''
       if (msg.toLowerCase().includes('invalid')) {
         setError('Incorrect email or password.')
+      } else if (msg.toLowerCase().includes('confirm your email')) {
+        setError(msg)
+        setNeedsConfirmation(true)
       } else if (msg) {
         setError(msg)
       } else {
@@ -56,6 +70,20 @@ function LoginForm() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (!email) { setResendError('Enter your email above first.'); setResendState('error'); return }
+    setResendState('sending')
+    setResendError('')
+    try {
+      await resendConfirmation(email)
+      setResendState('sent')
+      setResendCooldown(60)
+    } catch (err) {
+      setResendState('error')
+      setResendError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
     }
   }
 
@@ -106,9 +134,28 @@ function LoginForm() {
         </div>
 
         {error && (
-          <p className="text-sm text-[#e85757] bg-[rgba(232,87,87,0.08)] border border-[rgba(232,87,87,0.2)] rounded-lg px-3 py-2.5">
-            {error}
-          </p>
+          <div className="text-sm text-[#e85757] bg-[rgba(232,87,87,0.08)] border border-[rgba(232,87,87,0.2)] rounded-lg px-3 py-2.5">
+            <p>{error}</p>
+            {needsConfirmation && (
+              <p className="mt-1.5 text-xs">
+                {resendState === 'sent' ? (
+                  <span className="text-[#c9a84c]">
+                    New confirmation link sent{resendCooldown > 0 ? ` (retry in ${resendCooldown}s)` : ''}.
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendState === 'sending' || resendCooldown > 0}
+                    className="text-[#c9a84c] hover:text-[#e8c96d] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {resendState === 'sending' ? 'Sending...' : 'Resend confirmation email'}
+                  </button>
+                )}
+                {resendState === 'error' && <span className="block mt-1 text-[#e85757]">{resendError}</span>}
+              </p>
+            )}
+          </div>
         )}
 
         <button
