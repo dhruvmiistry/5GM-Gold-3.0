@@ -106,11 +106,9 @@ export default function RevisionMaterialPage() {
                         {item.type === 'PDF' && <Download size={11} className="text-[#5a5a66]" />}
                       </div>
                     </div>
-                    <h3 className="text-[#8e8e9a] font-medium text-sm mb-1.5">{item.title}</h3>
-                    <p className="text-[#5a5a66] text-xs leading-relaxed mb-3">{item.description}</p>
-                    <span className="text-[#3a3a42] text-[11px] font-mono">
-                      {item.pages} {item.type === 'Flashcards' ? 'cards' : 'pages'}
-                    </span>
+                    <div className="h-3 rounded-full w-3/4 mb-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-2.5 rounded-full w-1/2 mb-3" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    <div className="h-2.5 rounded-full w-1/4" style={{ background: 'rgba(255,255,255,0.03)' }} />
                   </div>
                   <div
                     className="absolute inset-0 flex items-center justify-center"

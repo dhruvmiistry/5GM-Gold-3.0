@@ -115,11 +115,11 @@ export default function LiveSessionsPage() {
                         {session.recurring}
                       </span>
                     </div>
-                    <h3 className="text-[#8e8e9a] font-medium text-sm mb-1">{session.title}</h3>
-                    <p className="text-[#5a5a66] text-xs leading-relaxed mb-3">{session.description}</p>
+                    <div className="h-3 rounded-full w-2/3 mb-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-2.5 rounded-full w-1/2 mb-3" style={{ background: 'rgba(255,255,255,0.04)' }} />
                     <div className="flex items-center gap-5 text-xs text-[#5a5a66]">
-                      <span className="flex items-center gap-1.5"><Calendar size={11} strokeWidth={1.75} />{session.date}</span>
-                      <span className="flex items-center gap-1.5"><Clock size={11} strokeWidth={1.75} />{session.time} · {session.duration}</span>
+                      <span className="flex items-center gap-1.5"><Calendar size={11} strokeWidth={1.75} /><span className="h-2 rounded-full w-14 inline-block" style={{ background: 'rgba(255,255,255,0.04)' }} /></span>
+                      <span className="flex items-center gap-1.5"><Clock size={11} strokeWidth={1.75} /><span className="h-2 rounded-full w-16 inline-block" style={{ background: 'rgba(255,255,255,0.04)' }} /></span>
                     </div>
                   </div>
                 </div>

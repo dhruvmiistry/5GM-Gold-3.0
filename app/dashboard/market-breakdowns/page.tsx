@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { mockMarketBreakdowns, Video } from '@/lib/mockData'
 import { DbVideo } from '@/lib/types'
 import VideoCard from '@/components/VideoCard'
-import { formatDuration, formatDate } from '@/lib/utils'
 import { Play, Lock, X } from 'lucide-react'
 import MuxPlayer from '@/components/MuxPlayer'
 import Badge from '@/components/Badge'
@@ -110,11 +109,10 @@ export default function MarketBreakdownsPage() {
                   >
                     <Play size={20} className="text-[rgba(201,168,76,0.2)]" />
                   </div>
-                  <div className="p-4">
+                  <div className="p-4 space-y-2">
                     <Badge variant="gold">{video.category}</Badge>
-                    <p className="text-[#5a5a66] text-sm font-medium mt-2 line-clamp-2">{video.title}</p>
-                    <p className="text-[#5a5a66] text-xs mt-1.5">{video.trader} · {formatDate(video.releaseDate)}</p>
-                    <p className="text-[#3a3a42] text-xs mt-0.5 font-mono">{formatDuration(video.duration)}</p>
+                    <div className="h-3 rounded-full w-3/4 mt-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-2.5 rounded-full w-1/2" style={{ background: 'rgba(255,255,255,0.04)' }} />
                   </div>
                 </div>
                 <div

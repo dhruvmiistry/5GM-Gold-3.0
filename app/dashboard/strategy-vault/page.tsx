@@ -106,12 +106,15 @@ export default function StrategyVaultPage() {
                       >
                         <Icon size={15} className="text-[#c9a84c]" />
                       </div>
-                      <div>
+                      <div className="flex-1 space-y-1.5">
                         <span className="text-[10px] text-[#5a5a66] uppercase tracking-wider">{item.type}</span>
-                        <h3 className="text-[#8e8e9a] font-medium text-sm mt-0.5">{item.title}</h3>
+                        <div className="h-3 rounded-full w-2/3" style={{ background: 'rgba(255,255,255,0.06)' }} />
                       </div>
                     </div>
-                    <p className="text-[#5a5a66] text-xs leading-relaxed">{item.description}</p>
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 rounded-full w-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                      <div className="h-2.5 rounded-full w-3/4" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    </div>
                   </div>
                   <div
                     className="absolute inset-0 flex items-center justify-center"

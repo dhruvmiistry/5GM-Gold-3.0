@@ -101,8 +101,8 @@ export default function WeeklyOutlooksPage() {
                   >
                     <TrendingUp size={24} className="text-[rgba(201,168,76,0.2)]" />
                   </div>
-                  <h3 className="text-[#8e8e9a] font-medium text-sm mb-1">{item.title}</h3>
-                  <p className="text-[#5a5a66] text-xs">{item.traders.join(', ')}</p>
+                  <div className="h-3 rounded-full w-3/4 mb-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <div className="h-2.5 rounded-full w-1/2" style={{ background: 'rgba(255,255,255,0.04)' }} />
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {item.markets.map(m => (
                       <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(255,255,255,0.04)] text-[#5a5a66]">{m}</span>
