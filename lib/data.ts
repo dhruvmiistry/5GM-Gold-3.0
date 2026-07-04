@@ -108,84 +108,94 @@ export async function getFreeVideos(): Promise<Video[]> {
   if (!SUPABASE_CONFIGURED) return mockFreeVideos
   try {
     const supabase = await getSupabase()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('videos')
       .select(FREE_VIDEO_TEASER_COLUMNS)
       .eq('access_level', 'free')
       .in('status', ['published', 'scheduled'])
-    if (!data?.length) return mockFreeVideos
+    // Supabase is configured, so an error or a genuinely empty result is real
+    // production state, not "not set up yet" — don't mask it behind placeholder
+    // mock titles (this previously showed users unreleased mock videos like
+    // "FX Pairs — EUR/USD & GBP/JPY Review" whenever the query errored or a
+    // transient auth hiccup returned no rows).
+    if (error || !data) { if (error) console.error('getFreeVideos failed:', error.message); return [] }
     // Sort by effective release date (release_date, falling back to created_at —
     // same fallback mapVideo uses for display). Doing this in JS rather than via
     // .order('release_date') because a plain DB-level sort puts legacy rows with
     // no release_date ahead of newly-scheduled ones instead of by actual recency.
     return data.map(mapVideo).sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
-  } catch { return mockFreeVideos }
+  } catch (e) { console.error('getFreeVideos failed:', e); return [] }
 }
 
 export async function getAllVideos(): Promise<Video[]> {
   if (!SUPABASE_CONFIGURED) return [...mockFreeVideos, ...mockMarketBreakdowns]
   try {
     const supabase = await getSupabase()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('videos')
       .select('*')
       .eq('status', 'published')
       .order('release_date', { ascending: false })
-    return data?.length ? data.map(mapVideo) : [...mockFreeVideos, ...mockMarketBreakdowns]
-  } catch { return [...mockFreeVideos, ...mockMarketBreakdowns] }
+    if (error) { console.error('getAllVideos failed:', error.message); return [] }
+    return (data ?? []).map(mapVideo)
+  } catch (e) { console.error('getAllVideos failed:', e); return [] }
 }
 
 export async function getMarketBreakdowns(): Promise<Video[]> {
   if (!SUPABASE_CONFIGURED) return mockMarketBreakdowns
   try {
     const supabase = await getSupabase()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('videos')
       .select('*')
       .eq('category', 'Market Breakdown')
       .eq('status', 'published')
       .order('release_date', { ascending: false })
-    return data?.length ? data.map(mapVideo) : mockMarketBreakdowns
-  } catch { return mockMarketBreakdowns }
+    if (error) { console.error('getMarketBreakdowns failed:', error.message); return [] }
+    return (data ?? []).map(mapVideo)
+  } catch (e) { console.error('getMarketBreakdowns failed:', e); return [] }
 }
 
 export async function getAnnouncements(): Promise<Announcement[]> {
   if (!SUPABASE_CONFIGURED) return mockAnnouncements
   try {
     const supabase = await getSupabase()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('announcements')
       .select('*')
       .eq('status', 'published')
       .order('pinned', { ascending: false })
       .order('published_at', { ascending: false })
-    return data?.length ? data.map(mapAnnouncement) : mockAnnouncements
-  } catch { return mockAnnouncements }
+    if (error) { console.error('getAnnouncements failed:', error.message); return [] }
+    return (data ?? []).map(mapAnnouncement)
+  } catch (e) { console.error('getAnnouncements failed:', e); return [] }
 }
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
   if (!SUPABASE_CONFIGURED) return mockLiveSessions
   try {
     const supabase = await getSupabase()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('live_sessions')
       .select('*')
       .order('session_time', { ascending: true })
-    return data?.length ? data.map(mapLiveSession) : mockLiveSessions
-  } catch { return mockLiveSessions }
+    if (error) { console.error('getLiveSessions failed:', error.message); return [] }
+    return (data ?? []).map(mapLiveSession)
+  } catch (e) { console.error('getLiveSessions failed:', e); return [] }
 }
 
 export async function getModules(): Promise<Module[]> {
   if (!SUPABASE_CONFIGURED) return mockModules
   try {
     const supabase = await getSupabase()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('modules')
       .select('*')
       .eq('status', 'published')
       .order('sort_order', { ascending: true })
-    return data?.length ? data.map(mapModule) : mockModules
-  } catch { return mockModules }
+    if (error) { console.error('getModules failed:', error.message); return [] }
+    return (data ?? []).map(mapModule)
+  } catch (e) { console.error('getModules failed:', e); return [] }
 }
 
 export async function getContentCounts(): Promise<{
