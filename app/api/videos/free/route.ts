@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
+// Public free-tier video list — not user-scoped, so this uses the admin
+// client (no session/cookies) rather than the cookie-bound server client.
+// The cookie-bound client's queries silently trigger a Supabase session
+// refresh via getSession(), which raced the browser's own independent
+// refresh cycle and caused a SIGNED_OUT -> /login -> /dashboard loop for
+// users clicking into Free Videos (see auth-context.tsx singleton notes).
 export async function GET() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // 'published' videos are always included. 'scheduled' videos are included
   // too — even ahead of their release_date — so the Free Videos list can show
