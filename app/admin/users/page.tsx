@@ -100,11 +100,13 @@ export default function AdminUsersPage() {
             />
           </div>
           <div className="flex gap-2">
-            {['all', 'free', 'gold'].map(f => (
+            {['all', 'free', 'gold', 'banned'].map(f => (
               <button key={f} onClick={() => setPlanFilter(f)}
                 className="px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wide transition-all capitalize"
                 style={planFilter === f
-                  ? { background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)' }
+                  ? f === 'banned'
+                    ? { background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }
+                    : { background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)' }
                   : { background: 'rgba(255,255,255,0.04)', color: '#5a5a66', border: '1px solid rgba(255,255,255,0.07)' }
                 }
               >

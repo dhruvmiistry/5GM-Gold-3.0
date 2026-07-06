@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
-  if (plan !== 'all') query = query.eq('plan', plan)
+  if (plan === 'banned') query = query.eq('banned', true)
+  else if (plan !== 'all') query = query.eq('plan', plan)
   if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
 
   const { data, error, count } = await query
