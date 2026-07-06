@@ -113,7 +113,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
             <div key={item.href} className="sidebar-link locked-nav cursor-default">
               <item.icon size={15} strokeWidth={1.75} />
               <span className="flex-1 font-medium" style={{ filter: 'blur(5px)', userSelect: 'none' }}>
-                {item.label}
+                Classified Section
               </span>
               <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
             </div>
