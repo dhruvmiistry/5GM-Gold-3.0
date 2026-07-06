@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, TrendingUp, UserMinus, ShieldCheck, Shield, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, TrendingUp, UserMinus, ShieldCheck, Shield, Save, Loader2, Ban, RotateCcw } from 'lucide-react'
 
 type Profile = {
   id: string; full_name: string | null; email: string | null
   plan: string; role: string; access_level: string
   trading_experience: string | null; admin_notes: string | null
+  banned: boolean
   created_at: string; updated_at: string
 }
 
@@ -32,7 +33,7 @@ export default function UserDetailPage() {
 
   useEffect(() => { fetchProfile() }, [id])
 
-  const patchUser = async (updates: Record<string, string>) => {
+  const patchUser = async (updates: Record<string, string | boolean>) => {
     const res = await fetch('/api/admin/users', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -65,6 +66,19 @@ export default function UserDetailPage() {
       showToast(`Role updated to ${role}`)
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Failed to update role')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const updateBanned = async (banned: boolean) => {
+    setSaving(true)
+    try {
+      await patchUser({ banned })
+      await fetchProfile()
+      showToast(banned ? 'User banned' : 'User unbanned')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to update ban status')
     } finally {
       setSaving(false)
     }
@@ -122,6 +136,9 @@ export default function UserDetailPage() {
               <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${isGold ? 'text-[#c9a84c] bg-[rgba(201,168,76,0.08)] border border-[rgba(201,168,76,0.15)]' : 'text-[#5a5a66] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]'}`}>
                 {profile.plan}
               </span>
+              {profile.banned && (
+                <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full text-red-400 bg-red-500/10 border border-red-500/25">Banned</span>
+              )}
             </div>
           </div>
         </div>
@@ -191,6 +208,35 @@ export default function UserDetailPage() {
                   <span className="text-[#8e8e9a] text-sm">Remove Admin</span>
                 </button>
               </div>
+            </div>
+
+            {/* Account status */}
+            <div className="p-6 rounded-2xl"
+              style={{ background: 'rgba(17,17,19,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <h2 className="text-white font-medium text-sm mb-4">Account Status</h2>
+              <div className="space-y-2">
+                {!profile.banned ? (
+                  <button onClick={() => updateBanned(true)} disabled={isAdmin || saving}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}
+                    title={isAdmin ? 'Remove admin role before banning' : undefined}>
+                    <Ban size={14} className="text-red-400" />
+                    <span className="text-red-400 text-sm font-medium">Ban User</span>
+                  </button>
+                ) : (
+                  <button onClick={() => updateBanned(false)} disabled={saving}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                    <RotateCcw size={14} className="text-[#c9a84c]" />
+                    <span className="text-[#c9a84c] text-sm font-medium">Unban User</span>
+                  </button>
+                )}
+              </div>
+              <p className="text-[#5a5a66] text-xs mt-3">
+                {profile.banned
+                  ? 'Blocks sign-in immediately. Any open session ends the next time it re-checks the session (e.g. page load).'
+                  : 'Blocks future sign-ins and ends any active session on its next page load.'}
+              </p>
             </div>
           </div>
         </div>

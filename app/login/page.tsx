@@ -35,6 +35,8 @@ function LoginForm() {
   const [error, setError] = useState(
     searchParams.get('error') === 'confirmation_failed'
       ? 'That confirmation link has expired or already been used. Enter your email below and request a new one.'
+      : searchParams.get('banned') === '1'
+      ? 'This account has been suspended.'
       : ''
   )
   const [needsConfirmation, setNeedsConfirmation] = useState(searchParams.get('error') === 'confirmation_failed')

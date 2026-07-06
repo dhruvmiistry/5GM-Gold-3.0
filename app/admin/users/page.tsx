@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Search, ChevronRight, TrendingUp, UserMinus, Loader2, ChevronLeft } from 'lucide-react'
+import { Search, ChevronRight, TrendingUp, UserMinus, Loader2, ChevronLeft, Ban, RotateCcw } from 'lucide-react'
 
 type Profile = {
   id: string; full_name: string | null; email: string | null
   plan: string; role: string; access_level: string
-  trading_experience: string | null; created_at: string
+  trading_experience: string | null; created_at: string; banned: boolean
 }
 
 function PlanBadge({ plan, role }: { plan: string; role: string }) {
@@ -155,7 +155,12 @@ export default function AdminUsersPage() {
               </div>
 
               {/* Plan */}
-              <div className="col-span-2"><PlanBadge plan={user.plan} role={user.role} /></div>
+              <div className="col-span-2 flex items-center gap-1.5">
+                <PlanBadge plan={user.plan} role={user.role} />
+                {user.banned && (
+                  <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full text-red-400 bg-red-500/10 border border-red-500/25">Banned</span>
+                )}
+              </div>
 
               {/* Experience */}
               <div className="col-span-2">
@@ -190,6 +195,23 @@ export default function AdminUsersPage() {
                         title="Downgrade to Free"
                       >
                         <UserMinus size={10} /> Downgrade
+                      </button>
+                    )}
+                    {user.banned ? (
+                      <button onClick={() => updateUser(user.id, { banned: false })}
+                        className="flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-lg transition-all text-[#c9a84c] hover:bg-[rgba(201,168,76,0.1)]"
+                        style={{ border: '1px solid rgba(201,168,76,0.2)' }}
+                        title="Unban user"
+                      >
+                        <RotateCcw size={10} /> Unban
+                      </button>
+                    ) : (
+                      <button onClick={() => updateUser(user.id, { banned: true })}
+                        className="flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-lg transition-all text-red-400 hover:bg-red-500/10"
+                        style={{ border: '1px solid rgba(239,68,68,0.2)' }}
+                        title="Ban user"
+                      >
+                        <Ban size={10} /> Ban
                       </button>
                     )}
                   </>

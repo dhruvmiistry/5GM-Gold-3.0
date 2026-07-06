@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function fetchOrCreateProfile(supabase: any, authUser: any) {
+  async function fetchOrCreateProfile(supabase: any, authUser: any): Promise<any> {
     const makeTimer = (ms: number) => new Promise<{ data: null }>(r => setTimeout(() => r({ data: null }), ms))
 
     const { data: profile } = await Promise.race([
@@ -132,18 +132,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // leaving the user stuck on minimal session data (name/plan/role) until a
   // manual refresh, which is more likely to happen when the DB is under load.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function scheduleProfileRetry(supabase: any, userId: string, email: string, isMounted: () => boolean, onUser: (u: User) => void) {
+  function scheduleProfileRetry(supabase: any, userId: string, email: string, isMounted: () => boolean, onUser: (u: User | null) => void) {
     const delays = [1500, 4000, 8000]
     let attempt = 0
     const tryFetch = async () => {
       if (!isMounted()) return
       try {
         const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-        if (data) { if (isMounted()) onUser(profileToUser(data, email)); return }
+        if (data) {
+          if (!isMounted()) return
+          if (data.banned) { try { await supabase.auth.signOut({ scope: 'global' }) } catch {}; onUser(null); return }
+          onUser(profileToUser(data, email))
+          return
+        }
       } catch {}
       if (++attempt < delays.length && isMounted()) setTimeout(tryFetch, delays[attempt])
     }
     setTimeout(tryFetch, delays[0])
+  }
+
+  // Signs a banned user out and clears state — called wherever a fetched
+  // profile turns out to have banned=true, so the ban takes effect the
+  // next time the app checks the session (page load / auth state change).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBanned = async (supabase: any) => {
+    try { await supabase.auth.signOut({ scope: 'global' }) } catch {}
+    setUser(null)
+    router.replace('/login?banned=1')
   }
 
   // ── Fetch profile and set user (called after login / refreshUser) ─
@@ -157,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!session?.user) { setUser(null); return }
 
       const profile = await fetchOrCreateProfile(supabase, session.user)
+      if (profile?.banned) { await handleBanned(supabase); return }
       // Fall back to session data if profile timed out — ensures dashboard
       // never sees user=null after a successful login
       setUser(profile
@@ -218,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   try {
                     const profile = await fetchOrCreateProfile(supabase, session.user)
                     if (!mounted) return
+                    if (profile?.banned) { await handleBanned(supabase); return }
                     if (profile) setUser(profileToUser(profile, session.user.email ?? ''))
                     else retry()
                   } catch {
@@ -237,6 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (session?.user) {
                   const profile = await fetchOrCreateProfile(supabase, session.user)
                   if (!mounted) return
+                  if (profile?.banned) { await handleBanned(supabase); return }
                   if (profile) {
                     setUser(profileToUser(profile, session.user.email ?? ''))
                   } else {
@@ -286,6 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       if (error.message.includes('Invalid login credentials')) throw new Error('Incorrect email or password.')
       if (error.message.includes('Email not confirmed'))       throw new Error('Please confirm your email before signing in.')
+      if (error.message.toLowerCase().includes('banned'))      throw new Error('This account has been suspended.')
       if (error.message.includes('Too many requests'))         throw new Error('Too many attempts. Please wait a few minutes.')
       throw new Error(error.message)
     }

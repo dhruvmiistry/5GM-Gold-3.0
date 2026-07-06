@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   if (id) {
     const { data, error } = await admin
       .from('profiles')
-      .select('id,full_name,email,plan,role,access_level,trading_experience,admin_notes,created_at,updated_at')
+      .select('id,full_name,email,plan,role,access_level,trading_experience,admin_notes,banned,created_at,updated_at')
       .eq('id', id)
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   let query = admin
     .from('profiles')
-    .select('id,full_name,email,plan,role,access_level,trading_experience,created_at', { count: 'exact' })
+    .select('id,full_name,email,plan,role,access_level,trading_experience,banned,created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 }
 
 const ALLOWED_PROFILE_FIELDS = new Set([
-  'role', 'plan', 'access_level', 'admin_notes', 'full_name', 'trading_experience',
+  'role', 'plan', 'access_level', 'admin_notes', 'full_name', 'trading_experience', 'banned',
 ])
 
 export async function PATCH(request: NextRequest) {
@@ -68,7 +68,22 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
   }
 
+  if (userId === adminUser.id && safeUpdates.banned === true) {
+    return NextResponse.json({ error: "You can't ban your own account." }, { status: 400 })
+  }
+
   const admin = createAdminClient()
+
+  // Ban/unban at the Auth level too — blocks future sign-ins immediately.
+  // The profiles.banned flag (checked in auth-context.tsx) is what signs
+  // out an already-active session, next time it re-checks the session.
+  if ('banned' in safeUpdates) {
+    const { error: authError } = await admin.auth.admin.updateUserById(userId, {
+      ban_duration: safeUpdates.banned ? '876000h' : 'none',
+    })
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
+  }
+
   const { data, error } = await admin.from('profiles').update(safeUpdates).eq('id', userId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
