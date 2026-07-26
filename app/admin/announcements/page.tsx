@@ -63,6 +63,7 @@ export default function AdminAnnouncementsPage() {
   const bannerFileRef = useRef<HTMLInputElement>(null)
 
   // Email composer
+  const [emailSubject, setEmailSubject] = useState('')
   const [emailRecipient, setEmailRecipient] = useState('all')
   const [targetUser, setTargetUser] = useState<UserResult | null>(null)
   const [targetQuery, setTargetQuery] = useState('')
@@ -99,6 +100,7 @@ export default function AdminAnnouncementsPage() {
   }, [targetQuery, emailRecipient])
 
   const resetEmailComposer = () => {
+    setEmailSubject('')
     setEmailRecipient('all')
     setTargetUser(null)
     setTargetQuery('')
@@ -188,7 +190,8 @@ export default function AdminAnnouncementsPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        subject: form.title,
+        subject: emailSubject.trim() || `5GM Gold — ${form.title}`,
+        title: form.title,
         body: form.body,
         bannerUrl: form.banner_url || null,
         recipient: emailRecipient,
@@ -385,6 +388,13 @@ export default function AdminAnnouncementsPage() {
                 <p className="text-[#5a5a66] text-xs -mt-2">
                   Sends the title/body above as an email. Independent of the on-site audience — pick who gets emailed here.
                 </p>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Subject Line</label>
+                  <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
+                    placeholder={`5GM Gold — ${form.title || 'Announcement title'}`}
+                    className="input-dark w-full text-sm" />
+                </div>
 
                 <div>
                   <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Send To</label>

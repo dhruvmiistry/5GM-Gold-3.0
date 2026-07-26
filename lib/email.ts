@@ -27,8 +27,7 @@ export async function sendAdminInviteEmail(to: string, tempPassword: string) {
 // address — no BCC-style leakage of the full member list.
 const BATCH_SIZE = 100
 
-export async function sendAnnouncementEmails(recipients: string[], title: string, body: string, bannerUrl?: string | null) {
-  const subject = `5GM Gold — ${title}`
+export async function sendAnnouncementEmails(recipients: string[], subject: string, title: string, body: string, bannerUrl?: string | null) {
   const html = announcementHtml(escapeHtml(title), escapeHtml(body), bannerUrl)
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const chunk = recipients.slice(i, i + BATCH_SIZE)

@@ -19,9 +19,11 @@ export async function POST(request: NextRequest) {
   const adminUser = await verifyAdmin()
   if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { subject, body, bannerUrl, recipient, targetUserId } = await request.json()
+  const { subject, title, body, bannerUrl, recipient, targetUserId } = await request.json()
 
-  if (!subject || !body) return NextResponse.json({ error: 'Subject and body are required' }, { status: 400 })
+  if (!subject || !title || !body) {
+    return NextResponse.json({ error: 'Subject, title, and body are required' }, { status: 400 })
+  }
   if (!RECIPIENT_TYPES.has(recipient)) return NextResponse.json({ error: 'Invalid recipient type' }, { status: 400 })
   if (recipient === 'specific' && !targetUserId) {
     return NextResponse.json({ error: 'Select a person to send to' }, { status: 400 })
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
   if (emails.length === 0) return NextResponse.json({ error: 'No matching recipients found' }, { status: 400 })
 
   try {
-    await sendAnnouncementEmails(emails, subject, body, bannerUrl || null)
+    await sendAnnouncementEmails(emails, subject, title, body, bannerUrl || null)
   } catch (e) {
     console.error('announcements/notify: send failed:', e)
     const message = e instanceof Error ? e.message : 'Unknown error'
