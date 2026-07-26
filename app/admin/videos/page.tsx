@@ -225,6 +225,10 @@ export default function AdminVideosPage() {
 
   const handleSave = async () => {
     if (!form.title || !form.slug) return
+    if (form.status === 'scheduled' && !form.release_date) {
+      showToast('Set a release date before scheduling this video')
+      return
+    }
     setSaving(true)
 
     let resolvedThumbnailUrl = form.thumbnail_url
@@ -667,15 +671,21 @@ export default function AdminVideosPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Release Date (UK time)</label>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">
+                  Release Date (UK time){form.status === 'scheduled' && <span className="text-[#c9a84c]"> *required</span>}
+                </label>
                 <input type="datetime-local" value={form.release_date}
                   onChange={e => setForm(p => ({ ...p, release_date: e.target.value }))}
+                  required={form.status === 'scheduled'}
                   className="input-dark w-full text-sm" />
+                {form.status === 'scheduled' && !form.release_date && (
+                  <p className="text-[10px] text-red-400 mt-1">Required — otherwise this video publishes immediately instead of scheduling</p>
+                )}
               </div>
             </div>
 
             <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.06)] sticky bottom-0" style={{ background: 'rgba(10,10,11,0.98)' }}>
-              <button onClick={handleSave} disabled={saving || !form.title || !form.slug || uploadState === 'uploading'}
+              <button onClick={handleSave} disabled={saving || !form.title || !form.slug || uploadState === 'uploading' || (form.status === 'scheduled' && !form.release_date)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
                 style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
                 {(saving || thumbnailUploading) ? <Loader2 size={14} className="animate-spin" /> : null}

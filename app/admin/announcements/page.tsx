@@ -1,17 +1,24 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, Edit2, Trash2, Loader2, X, Bell, Pin } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Plus, Edit2, Trash2, Loader2, X, Bell, Pin, Image as ImageIcon, Send, Eye, Search, UserCircle2 } from 'lucide-react'
+import { announcementHtml, escapeHtml } from '@/lib/emailTemplates'
 
 type Announcement = {
   id: string; title: string; body: string; audience: string
   pinned: boolean; status: string; scheduled_for: string | null
-  published_at: string | null; created_at: string
+  published_at: string | null; created_at: string; banner_url: string | null
 }
+
+type UserResult = { id: string; full_name: string | null; email: string }
 
 const emptyForm = {
   title: '', body: '', audience: 'all', pinned: false,
-  status: 'draft', scheduled_for: '',
+  status: 'draft', scheduled_for: '', banner_url: '',
+}
+
+const RECIPIENT_LABELS: Record<string, string> = {
+  all: 'All Members', free: 'Free Only', gold: 'Gold Only', admin: 'Admins Only', specific: 'Specific Person',
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -51,7 +58,20 @@ export default function AdminAnnouncementsPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
+  // Banner image upload
+  const [bannerUploading, setBannerUploading] = useState(false)
+  const bannerFileRef = useRef<HTMLInputElement>(null)
+
+  // Email composer
+  const [emailRecipient, setEmailRecipient] = useState('all')
+  const [targetUser, setTargetUser] = useState<UserResult | null>(null)
+  const [targetQuery, setTargetQuery] = useState('')
+  const [targetResults, setTargetResults] = useState<UserResult[]>([])
+  const [targetSearching, setTargetSearching] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -65,9 +85,31 @@ export default function AdminAnnouncementsPage() {
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
+  // Debounced search for "specific person" recipient
+  useEffect(() => {
+    if (emailRecipient !== 'specific' || !targetQuery.trim()) { setTargetResults([]); return }
+    setTargetSearching(true)
+    const t = setTimeout(async () => {
+      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(targetQuery)}`)
+      const data = await res.json().catch(() => null)
+      setTargetResults(Array.isArray(data?.data) ? data.data : [])
+      setTargetSearching(false)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [targetQuery, emailRecipient])
+
+  const resetEmailComposer = () => {
+    setEmailRecipient('all')
+    setTargetUser(null)
+    setTargetQuery('')
+    setTargetResults([])
+    setShowPreview(false)
+  }
+
   const openCreate = () => {
     setEditing(null)
     setForm(emptyForm)
+    resetEmailComposer()
     setPanelOpen(true)
   }
 
@@ -77,13 +119,27 @@ export default function AdminAnnouncementsPage() {
       title: a.title, body: a.body, audience: a.audience,
       pinned: a.pinned, status: a.status,
       scheduled_for: a.scheduled_for ? a.scheduled_for.slice(0, 16) : '',
+      banner_url: a.banner_url ?? '',
     })
+    resetEmailComposer()
     setPanelOpen(true)
+  }
+
+  const handleBannerFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file'); return }
+    setBannerUploading(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/upload-thumbnail', { method: 'POST', body: fd })
+    const data = await res.json().catch(() => ({}))
+    setBannerUploading(false)
+    if (!res.ok || !data.url) { showToast(data.error || 'Banner upload failed'); return }
+    setForm(p => ({ ...p, banner_url: data.url }))
   }
 
   const handleSave = async () => {
     setSaving(true)
-    const body = { ...form, scheduled_for: form.scheduled_for || null }
+    const body = { ...form, scheduled_for: form.scheduled_for || null, banner_url: form.banner_url || null }
     if (editing) {
       const res = await fetch('/api/admin/announcements', {
         method: 'PATCH',
@@ -118,6 +174,31 @@ export default function AdminAnnouncementsPage() {
     if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Delete failed'); return }
     showToast('Announcement deleted')
     fetchItems()
+  }
+
+  const handleSendEmail = async () => {
+    if (!form.title || !form.body) { showToast('Add a title and body first'); return }
+    if (emailRecipient === 'specific' && !targetUser) { showToast('Pick a recipient first'); return }
+
+    const label = emailRecipient === 'specific' ? targetUser!.email : RECIPIENT_LABELS[emailRecipient]
+    if (!confirm(`Send this email to ${label}?`)) return
+
+    setSendingEmail(true)
+    const res = await fetch('/api/admin/announcements/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject: form.title,
+        body: form.body,
+        bannerUrl: form.banner_url || null,
+        recipient: emailRecipient,
+        targetUserId: targetUser?.id ?? null,
+      }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setSendingEmail(false)
+    if (!res.ok) { showToast(data.error || 'Send failed'); return }
+    showToast(`Email sent to ${data.sent} recipient${data.sent === 1 ? '' : 's'}`)
   }
 
   return (
@@ -236,6 +317,29 @@ export default function AdminAnnouncementsPage() {
                   className="input-dark w-full text-sm resize-none" />
               </div>
 
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Banner Image (optional)</label>
+                <input ref={bannerFileRef} type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleBannerFile(f) }} />
+                {form.banner_url ? (
+                  <div className="relative rounded-xl overflow-hidden border border-[rgba(255,255,255,0.08)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.banner_url} alt="" className="w-full aspect-[21/9] object-cover" />
+                    <button onClick={() => setForm(p => ({ ...p, banner_url: '' }))}
+                      className="absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center justify-center bg-black/60 text-white hover:bg-black/80 transition-all">
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => bannerFileRef.current?.click()} disabled={bannerUploading}
+                    className="w-full flex items-center justify-center gap-2 py-6 rounded-xl text-sm text-[#5a5a66] hover:text-[#8e8e9a] transition-all"
+                    style={{ border: '1px dashed rgba(255,255,255,0.15)' }}>
+                    {bannerUploading ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+                    {bannerUploading ? 'Uploading…' : 'Upload banner image'}
+                  </button>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Audience</label>
@@ -274,6 +378,92 @@ export default function AdminAnnouncementsPage() {
                 </div>
                 <span className="text-[#8e8e9a] text-sm">Pin this announcement</span>
               </label>
+
+              {/* ── Email notification ─────────────────────────────── */}
+              <div className="pt-2 mt-2 border-t border-[rgba(255,255,255,0.06)] space-y-3">
+                <p className="text-[10px] uppercase tracking-widest text-[#3a3a42] pt-3">Email Notification</p>
+                <p className="text-[#5a5a66] text-xs -mt-2">
+                  Sends the title/body above as an email. Independent of the on-site audience — pick who gets emailed here.
+                </p>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Send To</label>
+                  <select value={emailRecipient}
+                    onChange={e => { setEmailRecipient(e.target.value); setTargetUser(null); setTargetQuery('') }}
+                    className="input-dark w-full text-sm">
+                    <option value="all">All Members</option>
+                    <option value="free">Free Only</option>
+                    <option value="gold">Gold Only</option>
+                    <option value="admin">Admins Only</option>
+                    <option value="specific">Specific Person</option>
+                  </select>
+                </div>
+
+                {emailRecipient === 'specific' && (
+                  <div>
+                    {targetUser ? (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.18)' }}>
+                        <UserCircle2 size={14} className="text-[#c9a84c] shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white text-xs font-medium truncate">{targetUser.full_name || 'Unnamed'}</p>
+                          <p className="text-[#5a5a66] text-[11px] truncate">{targetUser.email}</p>
+                        </div>
+                        <button onClick={() => setTargetUser(null)} className="text-[#5a5a66] hover:text-white transition-colors shrink-0">
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a5a66]" />
+                        <input value={targetQuery} onChange={e => setTargetQuery(e.target.value)}
+                          placeholder="Search by name or email…" className="input-dark w-full text-sm pl-8" />
+                        {targetSearching && <Loader2 size={13} className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-[#5a5a66]" />}
+                        {targetResults.length > 0 && (
+                          <div className="mt-1.5 rounded-xl overflow-hidden max-h-48 overflow-y-auto" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15,15,17,0.98)' }}>
+                            {targetResults.map(u => (
+                              <button key={u.id} onClick={() => { setTargetUser(u); setTargetQuery(''); setTargetResults([]) }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[rgba(255,255,255,0.05)] transition-all">
+                                <UserCircle2 size={13} className="text-[#5a5a66] shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-white text-xs truncate">{u.full_name || 'Unnamed'}</p>
+                                  <p className="text-[#5a5a66] text-[11px] truncate">{u.email}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowPreview(v => !v)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: '#8e8e9a' }}>
+                    <Eye size={13} /> {showPreview ? 'Hide Preview' : 'Preview Email'}
+                  </button>
+                  <button onClick={handleSendEmail} disabled={sendingEmail || !form.title || !form.body}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all disabled:opacity-50"
+                    style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
+                    {sendingEmail ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                    {sendingEmail ? 'Sending…' : 'Send Email'}
+                  </button>
+                </div>
+
+                {showPreview && (
+                  <iframe
+                    title="Email preview"
+                    srcDoc={announcementHtml(
+                      escapeHtml(form.title || 'Announcement title'),
+                      escapeHtml(form.body || 'Announcement content…'),
+                      form.banner_url || null
+                    )}
+                    className="w-full h-[420px] rounded-xl"
+                    style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+                  />
+                )}
+              </div>
             </div>
 
             <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.06)] sticky bottom-0"

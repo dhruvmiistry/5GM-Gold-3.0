@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import DashboardSidebar from '@/components/DashboardSidebar'
 import DashboardTopbar from '@/components/DashboardTopbar'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 import { Loader2 } from 'lucide-react'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <DashboardTopbar onMenuToggle={() => setSidebarOpen(true)} />
+        <AnnouncementBanner />
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>

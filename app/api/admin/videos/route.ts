@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
   if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
+  if (body.status === 'scheduled' && !body.release_date) {
+    return NextResponse.json({ error: 'Scheduled videos require a release date' }, { status: 400 })
+  }
   const admin = createAdminClient()
   const { data, error } = await admin.from('videos').insert(body).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -50,6 +53,16 @@ export async function PATCH(request: NextRequest) {
 
   const { id, updates } = await request.json()
   const admin = createAdminClient()
+
+  if ('status' in updates || 'release_date' in updates) {
+    const { data: current } = await admin.from('videos').select('status, release_date').eq('id', id).single()
+    const effectiveStatus = 'status' in updates ? updates.status : current?.status
+    const effectiveReleaseDate = 'release_date' in updates ? updates.release_date : current?.release_date
+    if (effectiveStatus === 'scheduled' && !effectiveReleaseDate) {
+      return NextResponse.json({ error: 'Scheduled videos require a release date' }, { status: 400 })
+    }
+  }
+
   const { data, error } = await admin.from('videos').update(updates).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)

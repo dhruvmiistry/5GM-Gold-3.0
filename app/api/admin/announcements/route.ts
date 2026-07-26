@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
   if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
+  if (body.status === 'published' && !body.published_at) body.published_at = new Date().toISOString()
+
   const admin = createAdminClient()
   const { data, error } = await admin.from('announcements').insert(body).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -43,6 +45,12 @@ export async function PATCH(request: NextRequest) {
 
   const { id, updates } = await request.json()
   const admin = createAdminClient()
+
+  if (updates.status === 'published' && !updates.published_at) {
+    const { data: current } = await admin.from('announcements').select('published_at').eq('id', id).single()
+    if (!current?.published_at) updates.published_at = new Date().toISOString()
+  }
+
   const { data, error } = await admin.from('announcements').update(updates).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)

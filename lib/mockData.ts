@@ -46,6 +46,7 @@ export interface Announcement {
   date: string
   type: 'content' | 'platform' | 'update' | 'welcome'
   isNew: boolean
+  bannerUrl?: string | null
 }
 
 export interface LiveSession {

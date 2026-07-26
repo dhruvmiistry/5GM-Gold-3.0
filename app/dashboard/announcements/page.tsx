@@ -67,6 +67,10 @@ export default function AnnouncementsPage() {
                   borderLeft: announcement.isNew ? '3px solid rgba(201,168,76,0.4)' : undefined,
                 }}
               >
+                {announcement.bannerUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={announcement.bannerUrl} alt="" className="w-full aspect-[21/9] object-cover" />
+                )}
                 <div className="flex items-start gap-4 p-5">
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"

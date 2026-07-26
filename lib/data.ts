@@ -64,6 +64,7 @@ function mapAnnouncement(row: any): Announcement {
     date: published,
     type: 'platform',
     isNew: published ? new Date(published).getTime() > sevenDaysAgo : false,
+    bannerUrl: row.banner_url ?? null,
   }
 }
 
