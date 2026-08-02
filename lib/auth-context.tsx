@@ -25,6 +25,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (name: string, email: string, password: string, experience: string) => Promise<void>
   resendConfirmation: (email: string) => Promise<void>
+  sendPasswordReset: (email: string) => Promise<void>
+  confirmPasswordReset: (newPassword: string) => Promise<void>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
@@ -377,6 +379,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Sends a recovery link that lands on /auth/callback (same PKCE code-exchange
+  // page used for signup confirmation), which then forwards to /reset-password
+  // via the existing `next` param. Always resolves without error for an unknown
+  // email — Supabase doesn't reveal account existence here, don't add a check
+  // that would.
+  const sendPasswordReset = async (email: string) => {
+    if (!SUPABASE_CONFIGURED) {
+      await new Promise(r => setTimeout(r, 600))
+      return
+    }
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    })
+    if (error) {
+      if (error.message.includes('you can only request this after') || error.message.includes('rate limit'))
+        throw new Error('Please wait a minute before requesting another email.')
+      if (error.message.includes('Too many requests')) throw new Error('Too many attempts. Please wait a few minutes.')
+      throw new Error(error.message)
+    }
+  }
+
+  // Called from /reset-password — relies on the session established by the
+  // recovery-link code exchange in /auth/callback, so (unlike changePassword)
+  // there's no old password to re-verify: clicking the emailed link already
+  // proved ownership of the account's email.
+  const confirmPasswordReset = async (newPassword: string) => {
+    if (!SUPABASE_CONFIGURED) {
+      await new Promise(r => setTimeout(r, 600))
+      return
+    }
+    const { createClient } = await import('./supabase/client')
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      if (error.message.includes('Password should be')) throw new Error('Password must be at least 8 characters.')
+      if (error.message.includes('different from the old password')) throw new Error('New password must be different from your previous password.')
+      throw new Error(error.message)
+    }
+  }
+
   const changePassword = async (currentPassword: string, newPassword: string) => {
     if (!SUPABASE_CONFIGURED) {
       await new Promise(r => setTimeout(r, 600))
@@ -426,7 +470,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, resendConfirmation, changePassword, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, pendingConfirmation, login, signup, resendConfirmation, sendPasswordReset, confirmPasswordReset, changePassword, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
