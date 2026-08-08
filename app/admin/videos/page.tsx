@@ -290,6 +290,34 @@ export default function AdminVideosPage() {
     fetchVideos()
   }
 
+  // Closing the panel without saving must not leave an unsaved Mux asset behind —
+  // otherwise it silently eats into the account's asset quota with no way to find it again.
+  const closePanel = async () => {
+    if (uploadId) {
+      const persistedAssetId = editing?.mux_asset_id ?? null
+      let assetIdToDelete = muxAssetId
+      if (!assetIdToDelete) {
+        try {
+          const res = await fetch(`/api/admin/mux?uploadId=${uploadId}`)
+          if (res.ok) {
+            const { asset } = await res.json()
+            assetIdToDelete = asset?.id ?? null
+          }
+        } catch {
+          // best effort
+        }
+      }
+      if (assetIdToDelete && assetIdToDelete !== persistedAssetId) {
+        fetch('/api/admin/mux', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ muxAssetId: assetIdToDelete }),
+        }).catch(() => {})
+      }
+    }
+    setPanelOpen(false)
+  }
+
   const handleDelete = async (video: Video) => {
     if (!confirm('Delete this video? This cannot be undone.')) return
     setDeleting(video.id)
@@ -448,14 +476,14 @@ export default function AdminVideosPage() {
       {/* Slide-in panel */}
       {panelOpen && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPanelOpen(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closePanel} />
           <div className="relative z-10 ml-auto w-full max-w-lg h-full overflow-y-auto flex flex-col"
             style={{ background: 'rgba(10,10,11,0.98)', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
 
             <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(255,255,255,0.06)] sticky top-0 z-10"
               style={{ background: 'rgba(10,10,11,0.98)' }}>
               <h2 className="text-white font-medium">{editing ? 'Edit Video' : 'Upload Video'}</h2>
-              <button onClick={() => setPanelOpen(false)}
+              <button onClick={closePanel}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5a5a66] hover:text-white hover:bg-[rgba(255,255,255,0.06)] transition-all">
                 <X size={15} />
               </button>
