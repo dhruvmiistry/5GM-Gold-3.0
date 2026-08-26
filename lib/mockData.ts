@@ -29,6 +29,13 @@ export interface TeamMember {
   }
 }
 
+export interface ResetLesson {
+  number: number
+  title: string
+  presenter: string
+  stage: string
+}
+
 export interface Module {
   id: string
   title: string
@@ -215,6 +222,29 @@ export const mockTeam: TeamMember[] = [
       tiktok: 'https://www.tiktok.com/@fx.ik',
     },
   },
+]
+
+export const resetLessons: ResetLesson[] = [
+  { number: 1, title: 'Welcome to 5GM Gold', presenter: 'Bani', stage: 'Foundations' },
+  { number: 2, title: 'What Is Trading?', presenter: 'Albin', stage: 'Foundations' },
+  { number: 3, title: 'Trading Platforms & Chart Basics', presenter: 'Mubz', stage: 'Foundations' },
+  { number: 4, title: 'Support & Resistance', presenter: 'Mubz', stage: 'Foundations' },
+  { number: 5, title: 'How Price Actually Moves', presenter: 'Bani', stage: 'Reading the Market' },
+  { number: 6, title: 'Liquidity', presenter: 'Albin', stage: 'Reading the Market' },
+  { number: 7, title: 'Market Structure', presenter: 'Mubz', stage: 'Reading the Market' },
+  { number: 8, title: 'Order Blocks & FVGs', presenter: 'Albin', stage: 'Reading the Market' },
+  { number: 9, title: 'DXY & EURGBP', presenter: 'Mubz', stage: 'Reading the Market' },
+  { number: 10, title: 'Higher Timeframe Bias', presenter: 'Bani', stage: 'Timeframes & Bias' },
+  { number: 11, title: 'Weekly & Daily Bias', presenter: 'Albin', stage: 'Timeframes & Bias' },
+  { number: 12, title: 'Merging Higher & Lower Timeframes', presenter: 'Mubz', stage: 'Timeframes & Bias' },
+  { number: 13, title: 'The 5GM Trading Method', presenter: 'Bani', stage: 'The 5GM Method' },
+  { number: 14, title: 'Risk Management', presenter: 'Mubz', stage: 'The 5GM Method' },
+  { number: 15, title: 'Trade Management', presenter: 'Albin', stage: 'The 5GM Method' },
+  { number: 16, title: 'Why 90% of Traders Lose', presenter: 'Albin', stage: 'Mindset & Career' },
+  { number: 17, title: 'Trading Psychology', presenter: 'Albin', stage: 'Mindset & Career' },
+  { number: 18, title: 'Prop Firms & Scaling Capital', presenter: 'Bani', stage: 'Mindset & Career' },
+  { number: 19, title: 'Building Your Trading Career', presenter: 'Bani', stage: 'Mindset & Career' },
+  { number: 20, title: 'Next Steps', presenter: 'Albin', stage: 'Mindset & Career' },
 ]
 
 export const mockModules: Module[] = [

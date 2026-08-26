@@ -12,7 +12,7 @@ export default function Footer() {
               <Image src="/logo.png" alt="5GM Gold" width={120} height={40} className="h-8 w-auto object-contain" />
             </div>
             <p className="text-[#5a5a66] text-sm leading-relaxed max-w-xs">
-              A private trading command centre built for traders serious about refinement, discipline, and consistent execution.
+              A free 20-lesson course from the 5GM mentors, built to reset your trading foundations — plus a private platform for those ready to go further.
             </p>
           </div>
 
@@ -21,6 +21,7 @@ export default function Footer() {
             <h4 className="text-[#8e8e9a] text-xs font-semibold uppercase tracking-wider mb-4">Platform</h4>
             <ul className="space-y-3">
               {[
+                { label: 'The Reset', href: '/#platform' },
                 { label: 'Free Videos', href: '/free-access' },
                 { label: 'Dashboard', href: '/dashboard' },
                 { label: 'Login', href: '/login' },

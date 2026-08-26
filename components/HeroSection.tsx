@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Play } from 'lucide-react'
+import { ArrowRight, ListChecks, RotateCcw } from 'lucide-react'
 
 const HERO_IMAGES = ['/bani.png', '/mubz.png', '/ab.png']
 
@@ -50,10 +50,18 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-[rgba(201,168,76,0.2)] mb-8"
+              className="inline-flex items-center rounded-full overflow-hidden mb-8"
+              style={{ border: '1px solid rgba(201,168,76,0.25)' }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-              <span className="text-[#c9a84c] text-xs font-medium tracking-widest uppercase">Private Trading Platform</span>
+              <span
+                className="flex items-center justify-center w-8 h-8 shrink-0"
+                style={{ background: 'linear-gradient(135deg, #b8932e 0%, #e8c96d 50%, #c9a84c 100%)' }}
+              >
+                <RotateCcw size={13} className="text-black" strokeWidth={2.25} />
+              </span>
+              <span className="pl-3 pr-4 py-1.5 text-white text-sm font-medium glass">
+                Introducing <span className="font-display italic text-gold-gradient">The Reset</span>
+              </span>
             </motion.div>
 
             <motion.h1
@@ -62,11 +70,9 @@ export default function HeroSection() {
               transition={{ duration: 0.7, delay: 0.1 }}
               className="font-display text-5xl sm:text-6xl md:text-7xl text-white leading-[1.05] tracking-tight mb-6"
             >
-              <span style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>The Private Platform</span>
+              <span style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Reset everything</span>
               <br />
-              <span className="text-gold-gradient">Built For Serious</span>
-              <br />
-              <span className="text-gold-gradient">Traders.</span>
+              <span className="text-gold-gradient">you knew about trading.</span>
             </motion.h1>
 
             <motion.p
@@ -75,8 +81,9 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-[#8e8e9a] text-lg font-light leading-relaxed max-w-lg mb-10"
             >
-              Built for traders serious about refinement, discipline, and execution.
-              Three free videos every week.
+              Twenty structured lessons from the 5GM mentors — free. Built for
+              beginners and traders stuck in the cycle: information overload,
+              strategy hopping, and no real foundation.
             </motion.p>
 
             <motion.div
@@ -89,15 +96,15 @@ export default function HeroSection() {
                 href="/signup"
                 className="group flex items-center gap-2 px-8 py-4 rounded-xl bg-[#c9a84c] text-black font-semibold text-sm hover:bg-[#e8c96d] transition-all shadow-lg shadow-[rgba(201,168,76,0.2)] hover:shadow-[rgba(201,168,76,0.35)]"
               >
-                Join Free Access
+                Start The Reset — Free
                 <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
-                href="/dashboard/free-videos"
+                href="#platform"
                 className="group flex items-center gap-2 px-8 py-4 rounded-xl border border-[rgba(255,255,255,0.1)] text-white text-sm font-medium hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.03)] transition-all"
               >
-                <Play size={14} className="text-[#c9a84c]" />
-                Watch Latest Video
+                <ListChecks size={14} className="text-[#c9a84c]" />
+                See The Curriculum
               </Link>
             </motion.div>
 
@@ -108,9 +115,9 @@ export default function HeroSection() {
               className="flex items-center gap-8"
             >
               {[
-                { value: '4', label: 'Traders' },
-                { value: '3×', label: 'Weekly' },
-                { value: 'Free', label: 'Access' },
+                { value: '20', label: 'Lessons' },
+                { value: '5', label: 'Mentors' },
+                { value: 'Free', label: 'Forever' },
               ].map(s => (
                 <div key={s.label}>
                   <div className="text-xl font-semibold text-[#c9a84c]">{s.value}</div>
@@ -192,8 +199,8 @@ export default function HeroSection() {
                       ))}
                     </div>
                     <div>
-                      <div className="text-white text-xs font-semibold">4 analysts. One platform.</div>
-                      <div className="text-[#5a5a66] text-[10px] mt-0.5">3 new videos every week</div>
+                      <div className="text-white text-xs font-semibold">5 mentors. One free course.</div>
+                      <div className="text-[#5a5a66] text-[10px] mt-0.5">20 lessons, start anytime</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">

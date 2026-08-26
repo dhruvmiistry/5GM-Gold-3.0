@@ -1,23 +1,14 @@
 'use client'
 
-import { BarChart2, BookOpen, Eye, Radio, Shield, TrendingUp, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HeroSection from '@/components/HeroSection'
-import FeatureCard from '@/components/FeatureCard'
+import ResetRoadmap from '@/components/ResetRoadmap'
 import TeamCard from '@/components/TeamCard'
 import CTASection from '@/components/CTASection'
-import { mockTeam } from '@/lib/mockData'
-
-const features = [
-  { icon: TrendingUp, title: 'Weekly Outlooks', description: 'Full analyst coverage of key markets every Monday. Know the narrative before the move.' },
-  { icon: Radio, title: 'Private Coaching', description: 'One-to-one sessions with 5GM analysts. Private advisory tailored to your trading.' },
-  { icon: Eye, title: 'Live Sessions', description: 'Access the live trading room. Watch 5GM analysts work through market structure in real time.' },
-  { icon: Shield, title: 'Strategy Vault', description: 'Complete playbooks, execution models, and trade frameworks from the full analyst team.' },
-  { icon: BarChart2, title: 'Market Breakdowns', description: 'Detailed analysis of individual instruments. Free content available weekly.' },
-  { icon: BookOpen, title: 'Development Modules', description: 'Eight structured modules from market foundations to professional execution standards.' },
-]
+import { mockTeam, resetLessons } from '@/lib/mockData'
 
 export default function HomePage() {
   return (
@@ -27,26 +18,22 @@ export default function HomePage() {
       {/* Hero */}
       <HeroSection />
 
-      {/* Features */}
+      {/* The Reset curriculum */}
       <section className="min-h-screen flex flex-col justify-center py-16 px-6 scroll-mt-16" id="platform">
         <div className="max-w-7xl mx-auto w-full">
           <div className="text-center mb-10">
-            <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Platform</p>
+            <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-3">The Reset</p>
             <h2 className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] tracking-tight mb-4">
-              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>One private ecosystem.</span>
+              <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Twenty lessons. Zero cost.</span>
               <br />
-              <span className="font-display italic text-gold-gradient">Built for serious traders.</span>
+              <span className="font-display italic text-gold-gradient">Built to rebuild your foundations.</span>
             </h2>
             <p className="text-[#8e8e9a] text-base font-light max-w-xl mx-auto">
-              Free weekly analyst videos — with a full private trading platform for serious traders.
+              A free, structured beginner course from the 5GM mentors — start from the ground up, at your own pace.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((f, i) => (
-              <FeatureCard key={f.title} {...f} index={i} />
-            ))}
-          </div>
+          <ResetRoadmap />
         </div>
       </section>
 
@@ -55,25 +42,30 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(201,168,76,0.08)] border border-[rgba(201,168,76,0.2)] mb-6">
-                <Zap size={12} className="text-[#c9a84c]" />
-                <span className="text-[#c9a84c] text-xs font-medium tracking-wide">Weekly Intelligence</span>
+              <div className="inline-flex items-center rounded-full overflow-hidden mb-6" style={{ border: '1px solid rgba(201,168,76,0.25)' }}>
+                <span
+                  className="flex items-center justify-center w-8 h-8 shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #b8932e 0%, #e8c96d 50%, #c9a84c 100%)' }}
+                >
+                  <Zap size={13} className="text-black" strokeWidth={2.25} />
+                </span>
+                <span className="pl-3 pr-4 py-1.5 text-white text-sm font-medium glass">Built For Beginners</span>
               </div>
               <h2 className="text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight mb-6">
-                <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>A free platform for traders</span>
+                <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>For traders stuck</span>
                 <br />
-                <span className="font-display italic text-gold-gradient">stuck in the cycle.</span>
+                <span className="font-display italic text-gold-gradient">in the cycle.</span>
               </h2>
               <p className="text-[#8e8e9a] text-base leading-relaxed mb-8">
-                Weekly breakdowns, trader psychology, and execution insights from the 5GM team — built from the mistakes, losses, and lessons that shaped us as traders.
+                Information overload. Strategy hopping. No risk management. No real structure. The Reset exists to break that cycle — a free, structured path built from the ground up by the 5GM mentors.
               </p>
               <ul className="space-y-3 mb-8">
                 {[
-                  'Learn why most traders stay inconsistent',
-                  'Weekly insights focused on discipline and execution',
-                  'Understand market structure without emotional trading',
-                  'Real lessons from traders who went through the same cycle',
-                  'Free access. No hidden paywall.',
+                  'Stop jumping between strategies with no foundation',
+                  'Learn market structure before risking real money',
+                  'Build risk management habits from lesson one',
+                  '20 lessons, structured start to finish — not random videos',
+                  'Completely free. No card, no catch.',
                 ].map(item => (
                   <li key={item} className="flex items-center gap-3 text-sm text-[#8e8e9a]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] shrink-0" />
@@ -83,10 +75,10 @@ export default function HomePage() {
               </ul>
               <div className="flex items-center gap-4">
                 <a href="/signup" className="px-6 py-3 rounded-xl bg-[#c9a84c] text-black font-semibold text-sm hover:bg-[#e8c96d] transition-all">
-                  Enter Platform
+                  Start The Reset
                 </a>
                 <a href="/dashboard/free-videos" className="text-sm text-[#8e8e9a] hover:text-white transition-colors">
-                  View videos →
+                  Explore free mentor videos →
                 </a>
               </div>
             </div>
@@ -96,46 +88,35 @@ export default function HomePage() {
               <div className="absolute -inset-4 rounded-3xl" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 70%)' }} />
 
               <div className="relative space-y-3">
-                {[
-                  { category: 'Weekly Outlook', title: 'Why traders force bad setups every Monday', trader: 'Bani', time: '30:47', isNew: true },
-                  { category: 'Discipline', title: 'How emotional trading destroys consistency', trader: 'Albin', time: '20:34', isNew: false },
-                  { category: 'Psychology', title: 'The greed cycle that blows funded accounts', trader: 'Mubz', time: '15:56', isNew: false },
-                ].map((v, i) => (
+                {resetLessons.slice(0, 3).map((lesson, i) => (
                   <Link
-                    href="/free-access"
-                    key={i}
+                    href="/signup"
+                    key={lesson.number}
                     className="group flex items-center gap-4 p-4 rounded-2xl card card-gold card-lift cursor-pointer"
                     style={{ opacity: 1 - i * 0.12, transform: `translateX(${i * 6}px)` }}
                   >
-                    {/* thumbnail */}
-                    <div className="relative w-16 h-12 rounded-xl shrink-0 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)', border: '1px solid rgba(201,168,76,0.15)' }}>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)' }}>
-                          <Eye size={12} className="text-[#c9a84c]" style={{ marginLeft: '1px' }} />
-                        </div>
-                      </div>
+                    {/* lesson number */}
+                    <div className="relative w-12 h-12 rounded-xl shrink-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)', border: '1px solid rgba(201,168,76,0.15)' }}>
+                      <span className="text-[#c9a84c] text-sm font-semibold">{String(lesson.number).padStart(2, '0')}</span>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[#c9a84c] text-[9px] font-semibold uppercase tracking-widest">{v.category}</span>
-                        {v.isNew && (
-                          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.2)' }}>New</span>
+                        <span className="text-[#c9a84c] text-[9px] font-semibold uppercase tracking-widest">Lesson {lesson.number}</span>
+                        {lesson.number === 1 && (
+                          <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.2)' }}>Start Here</span>
                         )}
                       </div>
-                      <p className="text-white text-sm font-medium leading-snug truncate">{v.title}</p>
+                      <p className="text-white text-sm font-medium leading-snug truncate">{lesson.title}</p>
                       <p className="text-[#5a5a66] text-[11px] mt-0.5 flex items-center gap-1.5">
                         <span className="w-1 h-1 rounded-full bg-[#c9a84c] opacity-40 shrink-0" />
-                        {v.trader}
+                        {lesson.presenter}
                       </p>
                     </div>
 
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <span className="text-[#3a3a46] text-[10px] font-mono">{v.time}</span>
-                      <div className="w-8 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                        <div className="h-full rounded-full bg-[#c9a84c] opacity-40" style={{ width: `${[65, 40, 25][i]}%` }} />
-                      </div>
-                    </div>
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full text-[#c9a84c]" style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)' }}>
+                      Free
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -152,10 +133,10 @@ export default function HomePage() {
             <h2 className="text-4xl sm:text-5xl md:text-6xl leading-[1.05] tracking-tight mb-4">
               <span className="text-white" style={{ fontFamily: 'var(--font-inter)', fontWeight: 600, fontStyle: 'normal' }}>Five mentors.</span>
               <br />
-              <span className="font-display italic text-gold-gradient">One private platform.</span>
+              <span className="font-display italic text-gold-gradient">One platform.</span>
             </h2>
             <p className="text-[#8e8e9a] text-base font-light max-w-xl mx-auto">
-              Each analyst covers distinct instruments and market structures. Collectively — one ecosystem.
+              The same five mentors behind 5GM Gold, teaching The Reset from lesson one.
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -169,10 +150,10 @@ export default function HomePage() {
 
       <CTASection
         badge="Free Access"
-        title="Enter the platform."
-        titleAccent="Free."
-        subtitle="No pricing. No obligation. Access weekly videos from inside the 5GM private platform."
-        primaryLabel="Create Free Account"
+        title="Start The Reset."
+        titleAccent="Completely Free."
+        subtitle="20 lessons. 5 mentors. No pricing, no obligation — build your trading foundations from the ground up."
+        primaryLabel="Start The Reset — Free"
         primaryHref="/signup"
         secondaryLabel="Sign In"
         secondaryHref="/login"

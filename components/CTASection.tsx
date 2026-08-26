@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, RotateCcw, LucideIcon } from 'lucide-react'
 
 interface CTASectionProps {
   title: string
@@ -13,9 +13,10 @@ interface CTASectionProps {
   secondaryLabel?: string
   secondaryHref?: string
   badge?: string
+  badgeIcon?: LucideIcon
 }
 
-export default function CTASection({ title, titleAccent, subtitle, primaryLabel, primaryHref, secondaryLabel, secondaryHref, badge }: CTASectionProps) {
+export default function CTASection({ title, titleAccent, subtitle, primaryLabel, primaryHref, secondaryLabel, secondaryHref, badge, badgeIcon: BadgeIcon = RotateCcw }: CTASectionProps) {
   return (
     <section className="relative py-32 overflow-hidden">
       {/* Gold glow */}
@@ -27,10 +28,16 @@ export default function CTASection({ title, titleAccent, subtitle, primaryLabel,
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-[rgba(201,168,76,0.2)] mb-8"
+            className="inline-flex items-center rounded-full overflow-hidden mb-8"
+            style={{ border: '1px solid rgba(201,168,76,0.25)' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
-            <span className="text-[#c9a84c] text-xs font-medium tracking-widest uppercase">{badge}</span>
+            <span
+              className="flex items-center justify-center w-8 h-8 shrink-0"
+              style={{ background: 'linear-gradient(135deg, #b8932e 0%, #e8c96d 50%, #c9a84c 100%)' }}
+            >
+              <BadgeIcon size={13} className="text-black" strokeWidth={2.25} />
+            </span>
+            <span className="pl-3 pr-4 py-1.5 text-white text-sm font-medium glass">{badge}</span>
           </motion.div>
         )}
 

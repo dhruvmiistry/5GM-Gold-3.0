@@ -8,7 +8,7 @@ import { Menu, X } from 'lucide-react'
 
 const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Platform', href: '/#platform' },
+  { label: 'The Reset', href: '/#platform' },
   { label: 'About', href: '/#about' },
   { label: 'Mentors', href: '/#team' },
 ]
@@ -41,7 +41,7 @@ export default function Navbar() {
 
       {/* Floating pill */}
       <div
-        className="pointer-events-auto w-full max-w-3xl rounded-full flex items-center px-2 py-1.5"
+        className="pointer-events-auto w-full md:w-auto max-w-3xl rounded-full flex items-center px-2 py-1.5"
         style={{
           background: scrolled ? 'rgba(8,8,9,0.90)' : 'rgba(12,12,14,0.78)',
           backdropFilter: 'blur(28px)',
@@ -56,7 +56,7 @@ export default function Navbar() {
         }}
       >
         {/* Desktop — nav links */}
-        <div className="hidden md:flex items-center gap-0.5 flex-1">
+        <div className="hidden md:flex items-center gap-0.5">
           {navLinks.map(l => (
             <Link
               key={l.href}
@@ -104,7 +104,7 @@ export default function Navbar() {
                   boxShadow: '0 0 18px rgba(201,168,76,0.22)',
                 }}
               >
-                Enter Platform
+                Start The Reset
               </Link>
             </>
           )}
@@ -188,7 +188,7 @@ export default function Navbar() {
                   boxShadow: '0 0 16px rgba(201,168,76,0.2)',
                 }}
               >
-                Enter Platform
+                Start The Reset
               </Link>
             </>
           )}

@@ -8,8 +8,8 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 
 export const metadata: Metadata = {
-  title: '5GM Gold — Private Trading Platform',
-  description: 'Your private trading command centre. Built for traders serious about refinement, discipline and execution.',
+  title: '5GM Gold — The Reset: Free Beginner Trading Course',
+  description: 'The Reset is a free, 20-lesson beginner trading course from the 5GM mentors — built to rebuild your foundations from the ground up.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
