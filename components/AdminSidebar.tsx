@@ -6,18 +6,27 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Play, Bell,
   Radio, FileText, Calendar, Settings,
-  ArrowLeft, X, ShieldCheck, BookOpen,
+  ArrowLeft, X, ShieldCheck, BookOpen, RotateCcw, PhoneCall, UserCheck, Mail,
 } from 'lucide-react'
 
 const sections = [
   {
     label: 'Content',
     items: [
+      { label: 'The Reset',     href: '/admin/the-reset',     icon: RotateCcw },
       { label: 'Videos',        href: '/admin/videos',        icon: Play },
       { label: 'Modules',       href: '/admin/modules',       icon: BookOpen },
       { label: 'Live Sessions', href: '/admin/live-sessions', icon: Radio },
       { label: 'Resources',     href: '/admin/resources',     icon: FileText },
       { label: 'Announcements', href: '/admin/announcements', icon: Bell },
+    ],
+  },
+  {
+    label: 'Mentor Calls',
+    items: [
+      { label: 'Mentor Calls',  href: '/admin/mentor-calls',  icon: PhoneCall },
+      { label: 'Mentors',       href: '/admin/mentors',       icon: UserCheck },
+      { label: 'Notifications', href: '/admin/notifications', icon: Mail },
     ],
   },
   {

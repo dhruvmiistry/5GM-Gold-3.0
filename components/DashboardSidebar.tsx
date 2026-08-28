@@ -6,13 +6,10 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import {
   LayoutDashboard,
+  RotateCcw,
   Play,
-  TrendingUp,
-  Radio,
-  BookOpen,
+  PhoneCall,
   Shield,
-  BarChart2,
-  BookMarked,
   Bell,
   Settings,
   Lock,
@@ -29,18 +26,24 @@ interface NavItem {
   badge?: string
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard',         href: '/dashboard',                    icon: LayoutDashboard, locked: false },
-  { label: 'Free Videos',       href: '/dashboard/free-videos',        icon: Play,            locked: false, badge: 'New' },
-  { label: 'Weekly Outlooks',   href: '/dashboard/weekly-outlooks',    icon: TrendingUp,      locked: true },
-  { label: 'Live Sessions',     href: '/dashboard/live-sessions',      icon: Radio,           locked: true },
-  { label: 'Gold Modules',      href: '/dashboard/gold-modules',       icon: BookOpen,        locked: true },
-  { label: 'Strategy Vault',    href: '/dashboard/strategy-vault',     icon: Shield,          locked: true },
-  { label: 'Market Breakdowns', href: '/dashboard/market-breakdowns',  icon: BarChart2,       locked: true },
-  { label: 'Revision Material', href: '/dashboard/revision-material',  icon: BookMarked,      locked: true },
-  { label: 'Announcements',     href: '/dashboard/announcements',      icon: Bell,            locked: false, badge: '1' },
-  { label: 'Settings',          href: '/dashboard/settings',           icon: Settings,        locked: false },
+// Structured learning path — shown first and never locked.
+const primaryNavItems: NavItem[] = [
+  { label: 'Dashboard',    href: '/dashboard',              icon: LayoutDashboard, locked: false },
+  { label: 'The Reset',    href: '/dashboard/the-reset',    icon: RotateCcw,       locked: false },
+  { label: 'Mentor Calls', href: '/dashboard/mentor-calls', icon: PhoneCall,       locked: false },
 ]
+
+// Secondary/free-access items shown below the learning path.
+const secondaryNavItems: NavItem[] = [
+  { label: 'Free Videos',   href: '/dashboard/free-videos',   icon: Play, locked: false },
+  { label: 'Announcements', href: '/dashboard/announcements', icon: Bell, locked: false, badge: '1' },
+  { label: 'Settings',      href: '/dashboard/settings',      icon: Settings, locked: false },
+]
+
+// The individual Gold pages (weekly-outlooks, live-sessions, gold-modules,
+// strategy-vault, market-breakdowns, revision-material) aren't linked from
+// the sidebar — Gold isn't open yet, so they're collapsed into one quiet
+// row below rather than six locked links.
 
 interface DashboardSidebarProps {
   mobileOpen?: boolean
@@ -76,10 +79,32 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
 
-        {/* Free section */}
+        {/* Learning path — The Reset is the primary destination */}
         <div className="mb-3">
-          <p className="section-label px-3 pb-2">Free Access</p>
-          {navItems.filter(i => !i.locked).map(item => {
+          <p className="section-label px-3 pb-2">Learning Path</p>
+          {primaryNavItems.map(item => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onMobileClose}
+                className={`sidebar-link ${isActive ? 'active' : ''}`}
+              >
+                <item.icon size={15} strokeWidth={isActive ? 2 : 1.75} />
+                <span className="flex-1 font-medium">{item.label}</span>
+                {isActive && (
+                  <ChevronRight size={11} className="text-[#c9a84c] opacity-60" />
+                )}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Secondary — supplementary content, not the main path */}
+        <div className="mb-3">
+          <p className="section-label px-3 pb-2">More</p>
+          {secondaryNavItems.map(item => {
             const isActive = pathname === item.href
             return (
               <Link
@@ -103,21 +128,13 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
           })}
         </div>
 
-        {/* Gold section */}
+        {/* Gold — quiet, single row. Not open yet; not a sales pitch. */}
         <div>
-          <div className="flex items-center gap-2 px-3 pb-2">
-            <p className="section-label">Gold Access</p>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+          <div className="sidebar-link locked-nav cursor-default" title="Gold access is not open yet">
+            <Shield size={15} strokeWidth={1.75} />
+            <span className="flex-1 font-medium text-[#5a5a66]">Gold Programme</span>
+            <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
           </div>
-          {navItems.filter(i => i.locked).map(item => (
-            <div key={item.href} className="sidebar-link locked-nav cursor-default">
-              <item.icon size={15} strokeWidth={1.75} />
-              <span className="flex-1 font-medium" style={{ filter: 'blur(5px)', userSelect: 'none' }}>
-                Classified Section
-              </span>
-              <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
-            </div>
-          ))}
         </div>
 
         {/* Admin Portal link */}
@@ -152,7 +169,7 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
                 ? 'Full platform access. Admin portal enabled.'
                 : hasGoldAccess
                 ? 'Full Gold access unlocked.'
-                : 'Free videos available now. Premium access coming soon.'}
+                : 'You have full access to The Reset and Free Videos.'}
             </p>
           </div>
         </div>

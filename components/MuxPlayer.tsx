@@ -8,6 +8,7 @@ interface MuxPlayerProps {
   title?: string
   thumbnailUrl?: string
   accentColor?: string
+  onEnded?: () => void
 }
 
 interface QualityLevel {
@@ -24,7 +25,7 @@ type MuxPlayerEl = HTMLElement & {
   }
 }
 
-export default function MuxPlayer({ playbackId, title, thumbnailUrl, accentColor = '#c9a84c' }: MuxPlayerProps) {
+export default function MuxPlayer({ playbackId, title, thumbnailUrl, accentColor = '#c9a84c', onEnded }: MuxPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [qualities, setQualities] = useState<QualityLevel[]>([])
   const [activeQuality, setActiveQuality] = useState<number>(-1) // -1 = Auto
@@ -79,6 +80,7 @@ export default function MuxPlayer({ playbackId, title, thumbnailUrl, accentColor
           accentColor={accentColor}
           renditionOrder="desc"
           onLoadedMetadata={handleLoadedMetadata}
+          onEnded={onEnded}
           style={{ width: '100%', aspectRatio: '16/9' }}
         />
       </div>

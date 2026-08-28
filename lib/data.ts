@@ -113,6 +113,9 @@ export async function getFreeVideos(): Promise<Video[]> {
       .from('videos')
       .select(FREE_VIDEO_TEASER_COLUMNS)
       .eq('access_level', 'free')
+      // Videos assigned to a module (e.g. The Reset) belong to that structured
+      // course, not the standalone Free Videos library — keep the two separate.
+      .is('module_id', null)
       .in('status', ['published', 'scheduled'])
     // Supabase is configured, so an error or a genuinely empty result is real
     // production state, not "not set up yet" — don't mask it behind placeholder
@@ -197,6 +200,146 @@ export async function getModules(): Promise<Module[]> {
     if (error) { console.error('getModules failed:', error.message); return [] }
     return (data ?? []).map(mapModule)
   } catch (e) { console.error('getModules failed:', e); return [] }
+}
+
+// ── The Reset (free 20-lesson course) ──────────────────────
+// Modeled on the existing modules/videos schema — no dedicated tables.
+// The course is a `modules` row (slug: 'the-reset') whose lessons are
+// `videos` rows with matching module_id, ordered by the explicit
+// `sort_order` column (release_date can't express a fixed curriculum order).
+
+export interface ResetLessonVideo {
+  id: string
+  title: string
+  description: string
+  thumbnail: string | null
+  muxPlaybackId: string | null
+  duration: number
+  analyst: string
+  stage: string
+  sortOrder: number
+}
+
+export interface ResetModuleData {
+  id: string
+  title: string
+  description: string
+  lessons: ResetLessonVideo[]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapResetLesson(row: any): ResetLessonVideo {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? '',
+    thumbnail: row.thumbnail_url ?? (row.mux_playback_id ? `https://image.mux.com/${row.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5` : null),
+    muxPlaybackId: row.mux_playback_id ?? null,
+    duration: parseDuration(row.duration),
+    analyst: row.analyst_name ?? 'Analyst',
+    stage: row.category ?? 'The Reset',
+    sortOrder: row.sort_order ?? 0,
+  }
+}
+
+// Returns null if the course hasn't been set up in Supabase yet (no
+// 'the-reset' module) — the dashboard renders an honest coming-soon state
+// in that case rather than fabricating lessons.
+export async function getResetModule(): Promise<ResetModuleData | null> {
+  if (!SUPABASE_CONFIGURED) return null
+  try {
+    const supabase = await getSupabase()
+    const { data: moduleRow, error: moduleError } = await supabase
+      .from('modules')
+      .select('id, title, description')
+      .eq('slug', 'the-reset')
+      .eq('status', 'published')
+      .maybeSingle()
+    if (moduleError || !moduleRow) {
+      if (moduleError) console.error('getResetModule failed:', moduleError.message)
+      return null
+    }
+
+    const { data: videos, error: videosError } = await supabase
+      .from('videos')
+      .select('id, title, description, thumbnail_url, duration, category, analyst_name, mux_playback_id, processing_status, sort_order')
+      .eq('module_id', moduleRow.id)
+      .eq('status', 'published')
+      .eq('processing_status', 'ready')
+      .order('sort_order', { ascending: true })
+    if (videosError) console.error('getResetModule videos failed:', videosError.message)
+
+    return {
+      id: moduleRow.id,
+      title: moduleRow.title,
+      description: moduleRow.description ?? '',
+      lessons: (videos ?? []).map(mapResetLesson),
+    }
+  } catch (e) { console.error('getResetModule failed:', e); return null }
+}
+
+export async function getResetProgress(userId: string, moduleId: string): Promise<{
+  percentage: number
+  completedVideoIds: string[]
+}> {
+  const fallback = { percentage: 0, completedVideoIds: [] }
+  if (!SUPABASE_CONFIGURED || !userId) return fallback
+  try {
+    const supabase = await getSupabase()
+    const [{ data: moduleProgress }, { data: videoProgress }] = await Promise.all([
+      supabase.from('user_module_progress').select('progress_percentage').eq('user_id', userId).eq('module_id', moduleId).maybeSingle(),
+      supabase.from('video_progress').select('video_id').eq('user_id', userId).eq('completed', true),
+    ])
+    return {
+      percentage: moduleProgress?.progress_percentage ?? 0,
+      completedVideoIds: (videoProgress ?? []).map((v: { video_id: string }) => v.video_id),
+    }
+  } catch (e) { console.error('getResetProgress failed:', e); return fallback }
+}
+
+// Self-reported completion toggle for a Reset lesson — not watch-time tracked.
+// Recomputes and upserts the rollup module percentage after each change.
+// No forced sequencing: any lesson can be marked complete in any order.
+export async function setResetLessonComplete(
+  userId: string,
+  videoId: string,
+  moduleId: string,
+  lessonIds: string[],
+  completed: boolean,
+): Promise<{ success: boolean; percentage: number }> {
+  const fallback = { success: false, percentage: 0 }
+  if (!SUPABASE_CONFIGURED || !userId) return fallback
+  try {
+    const supabase = await getSupabase()
+    const { error: upsertError } = await supabase.from('video_progress').upsert(
+      { user_id: userId, video_id: videoId, completed, completed_at: completed ? new Date().toISOString() : null, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,video_id' },
+    )
+    if (upsertError) throw upsertError
+
+    const { data: completedRows } = await supabase
+      .from('video_progress')
+      .select('video_id')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .in('video_id', lessonIds)
+
+    const completedCount = completedRows?.length ?? 0
+    const percentage = lessonIds.length > 0 ? Math.round((completedCount / lessonIds.length) * 100) : 0
+
+    const { error: moduleError } = await supabase.from('user_module_progress').upsert(
+      {
+        user_id: userId, module_id: moduleId, progress_percentage: percentage,
+        completed: percentage === 100,
+        completed_at: percentage === 100 ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,module_id' },
+    )
+    if (moduleError) throw moduleError
+
+    return { success: true, percentage }
+  } catch (e) { console.error('setResetLessonComplete failed:', e); return fallback }
 }
 
 export async function getContentCounts(): Promise<{

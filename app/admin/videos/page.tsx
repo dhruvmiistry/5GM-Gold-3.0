@@ -13,8 +13,11 @@ type Video = {
   status: string; release_date: string | null; created_at: string
   mux_asset_id: string | null; mux_playback_id: string | null
   mux_upload_id: string | null; processing_status: string | null
+  sort_order: number
   modules?: { title: string } | null
 }
+
+type ModuleOption = { id: string; title: string; access_level: string; videoCount: number }
 
 const SECTIONS = [
   { label: 'Free Videos',        category: 'Free Video',       access_level: 'free' },
@@ -24,10 +27,30 @@ const SECTIONS = [
   { label: 'Gold Content',       category: 'Gold',             access_level: 'gold' },
 ]
 
+// 'standalone' = a normal video slotted into one of the fixed sections above.
+// 'course' = a lesson inside a structured module (e.g. The Reset) — access
+// level is inherited from the module, and it never appears in Free Videos.
+type Placement = 'standalone' | 'course'
+
 const emptyForm = {
   title: '', slug: '', description: '', thumbnail_url: '',
-  section: 'Free Videos', analyst_name: '', module_id: '',
-  access_level: 'free', category: 'Free Video', status: 'draft', release_date: '',
+  placement: 'standalone' as Placement,
+  section: 'Free Videos', analyst_name: '',
+  module_id: '', stage: '', sort_order: 0,
+  status: 'draft', release_date: '',
+}
+
+function SectionHeader({ step, title }: { step: number; title: string }) {
+  return (
+    <div className="flex items-center gap-2.5 pt-1">
+      <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+        style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.22)' }}>
+        {step}
+      </span>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#8e8e9a]">{title}</p>
+      <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+    </div>
+  )
 }
 
 type UploadState = 'idle' | 'uploading' | 'processing' | 'ready' | 'error'
@@ -56,6 +79,7 @@ function ProcessingBadge({ status }: { status: string | null }) {
 
 export default function AdminVideosPage() {
   const [videos, setVideos] = useState<Video[]>([])
+  const [modules, setModules] = useState<ModuleOption[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -97,6 +121,16 @@ export default function AdminVideosPage() {
   }, [search, statusFilter])
 
   useEffect(() => { fetchVideos() }, [fetchVideos])
+
+  useEffect(() => {
+    fetch('/api/admin/modules')
+      .then(r => r.json())
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((data: any[]) => setModules(Array.isArray(data) ? data.map(m => ({
+        id: m.id, title: m.title, access_level: m.access_level, videoCount: m.videos?.[0]?.count ?? 0,
+      })) : []))
+      .catch(() => {})
+  }, [])
 
   // Poll Mux for asset readiness after upload
   const startPolling = useCallback((uid: string) => {
@@ -204,14 +238,16 @@ export default function AdminVideosPage() {
 
   const openEdit = (v: Video) => {
     setEditing(v)
+    const isCourse = !!v.module_id
     const matchedSection = SECTIONS.find(s => s.category === v.category && s.access_level === v.access_level)
     setForm({
       title: v.title, slug: v.slug, description: v.description ?? '',
       thumbnail_url: v.thumbnail_url ?? '',
+      placement: isCourse ? 'course' : 'standalone',
       section: matchedSection?.label ?? 'Free Videos',
-      category: v.category ?? 'Free Video',
-      analyst_name: v.analyst_name ?? '', module_id: v.module_id ?? '',
-      access_level: v.access_level, status: v.status,
+      analyst_name: v.analyst_name ?? '',
+      module_id: v.module_id ?? '', stage: isCourse ? (v.category ?? '') : '', sort_order: v.sort_order ?? 0,
+      status: v.status,
       release_date: v.release_date ? utcISOStringToLondonLocal(v.release_date) : '',
     })
     setMuxAssetId(v.mux_asset_id)
@@ -227,6 +263,10 @@ export default function AdminVideosPage() {
     if (!form.title || !form.slug) return
     if (form.status === 'scheduled' && !form.release_date) {
       showToast('Set a release date before scheduling this video')
+      return
+    }
+    if (form.placement === 'course' && !form.module_id) {
+      showToast('Pick a course, or switch back to Standalone')
       return
     }
     setSaving(true)
@@ -250,16 +290,20 @@ export default function AdminVideosPage() {
     }
 
     const selectedSection = SECTIONS.find(s => s.label === form.section) ?? SECTIONS[0]
+    const selectedModule = modules.find(m => m.id === form.module_id)
+    const isCourse = form.placement === 'course' && !!selectedModule
+
     const body = {
       title: form.title,
       slug: form.slug,
       description: form.description || null,
       analyst_name: form.analyst_name || null,
-      module_id: form.module_id || null,
+      module_id: isCourse ? selectedModule!.id : null,
+      sort_order: isCourse ? (form.sort_order || 0) : 0,
       release_date: form.release_date ? londonTimeToUTCISOString(form.release_date) : null,
       status: form.status,
-      category: selectedSection.category,
-      access_level: selectedSection.access_level,
+      category: isCourse ? (form.stage || selectedModule!.title) : selectedSection.category,
+      access_level: isCourse ? selectedModule!.access_level : selectedSection.access_level,
       mux_asset_id: muxAssetId || null,
       mux_playback_id: muxPlaybackId || null,
       mux_upload_id: uploadId || null,
@@ -491,9 +535,8 @@ export default function AdminVideosPage() {
 
             <div className="flex-1 px-6 py-5 space-y-5">
 
-              {/* Video Upload Zone */}
+              <SectionHeader step={1} title="Video File" />
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-2">Video File</label>
 
                 {uploadState === 'idle' && (
                   <div
@@ -581,11 +624,11 @@ export default function AdminVideosPage() {
                 )}
               </div>
 
-              {/* Thumbnail */}
+              {/* Thumbnail — optional, part of the video step */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-[10px] uppercase tracking-widest text-[#3a3a42]">
-                    Thumbnail <span className="normal-case">(optional)</span>
+                    Thumbnail <span className="normal-case">(optional — Mux auto-generates one)</span>
                   </label>
                   <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
                     {(['url', 'file'] as const).map(mode => (
@@ -646,7 +689,8 @@ export default function AdminVideosPage() {
                 )}
               </div>
 
-              {/* Metadata fields */}
+              <SectionHeader step={2} title="Details" />
+
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Title</label>
                 <input
@@ -661,19 +705,6 @@ export default function AdminVideosPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Upload To</label>
-                <select
-                  value={form.section}
-                  onChange={e => setForm(p => ({ ...p, section: e.target.value }))}
-                  className="input-dark w-full text-sm"
-                >
-                  {SECTIONS.map(s => (
-                    <option key={s.label} value={s.label}>{s.label} ({s.access_level === 'gold' ? 'Gold only' : 'Free'})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
                 <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Analyst</label>
                 <input
                   value={form.analyst_name}
@@ -684,10 +715,106 @@ export default function AdminVideosPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Description</label>
+                <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">
+                  Description <span className="normal-case">(optional)</span>
+                </label>
                 <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                   placeholder="Short description…" rows={3} className="input-dark w-full text-sm resize-none" />
               </div>
+
+              <SectionHeader step={3} title="Where It Lives" />
+
+              {/* Standalone vs. course — one decision instead of two overlapping dropdowns */}
+              <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                {([
+                  { key: 'standalone' as Placement, label: 'Standalone' },
+                  { key: 'course' as Placement, label: 'Inside a Course' },
+                ]).map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setForm(p => ({ ...p, placement: opt.key }))}
+                    className="flex-1 py-2.5 text-xs font-semibold uppercase tracking-wide transition-all"
+                    style={form.placement === opt.key
+                      ? { background: 'rgba(201,168,76,0.12)', color: '#c9a84c' }
+                      : { background: 'transparent', color: '#5a5a66' }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {form.placement === 'standalone' ? (
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Section</label>
+                  <select
+                    value={form.section}
+                    onChange={e => setForm(p => ({ ...p, section: e.target.value }))}
+                    className="input-dark w-full text-sm"
+                  >
+                    {SECTIONS.map(s => (
+                      <option key={s.label} value={s.label}>{s.label} ({s.access_level === 'gold' ? 'Gold only' : 'Free'})</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-[#5a5a66] mt-1.5">
+                    Shows up in the {form.section} list on the member dashboard.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Course</label>
+                    {modules.length === 0 ? (
+                      <p className="text-[#5a5a66] text-xs px-1">
+                        No courses yet — create one under Admin → Modules first.
+                      </p>
+                    ) : (
+                      <select
+                        value={form.module_id}
+                        onChange={e => {
+                          const mod = modules.find(m => m.id === e.target.value)
+                          setForm(p => ({ ...p, module_id: e.target.value, sort_order: mod ? mod.videoCount + 1 : p.sort_order }))
+                        }}
+                        className="input-dark w-full text-sm"
+                      >
+                        <option value="">Select a course…</option>
+                        {modules.map(m => (
+                          <option key={m.id} value={m.id}>{m.title} ({m.access_level === 'gold' ? 'Gold' : 'Free'} · {m.videoCount} lesson{m.videoCount === 1 ? '' : 's'})</option>
+                        ))}
+                      </select>
+                    )}
+                    <p className="text-[10px] text-[#5a5a66] mt-1.5">
+                      Access level is inherited from the course. This won&apos;t appear in Free Videos.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">
+                        Stage <span className="normal-case">(optional)</span>
+                      </label>
+                      <input
+                        value={form.stage}
+                        onChange={e => setForm(p => ({ ...p, stage: e.target.value }))}
+                        placeholder="e.g. Foundations"
+                        className="input-dark w-full text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">
+                        Lesson Order
+                      </label>
+                      <input
+                        type="number" min={0}
+                        value={form.sort_order}
+                        onChange={e => setForm(p => ({ ...p, sort_order: Number(e.target.value) }))}
+                        className="input-dark w-full text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <SectionHeader step={4} title="Publish" />
 
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-[#3a3a42] mb-1.5">Status</label>
@@ -713,7 +840,7 @@ export default function AdminVideosPage() {
             </div>
 
             <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.06)] sticky bottom-0" style={{ background: 'rgba(10,10,11,0.98)' }}>
-              <button onClick={handleSave} disabled={saving || !form.title || !form.slug || uploadState === 'uploading' || (form.status === 'scheduled' && !form.release_date)}
+              <button onClick={handleSave} disabled={saving || !form.title || !form.slug || uploadState === 'uploading' || (form.status === 'scheduled' && !form.release_date) || (form.placement === 'course' && !form.module_id)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
                 style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
                 {(saving || thumbnailUploading) ? <Loader2 size={14} className="animate-spin" /> : null}

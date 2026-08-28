@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
-import { getFreeVideos, getAnnouncements } from '@/lib/data'
+import { getFreeVideos, getAnnouncements, getResetModule, getResetProgress, type ResetModuleData } from '@/lib/data'
 import { formatDate, formatDuration } from '@/lib/utils'
 import { useCountdown } from '@/lib/hooks'
-import { Play, Bell, ArrowRight, Lock } from 'lucide-react'
+import { Play, Bell, ArrowRight, Lock, RotateCcw, CheckCircle2 } from 'lucide-react'
 import Badge from '@/components/Badge'
 import type { Video, Announcement } from '@/lib/mockData'
 
@@ -25,12 +25,21 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [videos, setVideos] = useState<Video[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [resetModule, setResetModule] = useState<ResetModuleData | null>(null)
+  const [resetProgress, setResetProgress] = useState({ percentage: 0, completedVideoIds: [] as string[] })
   const [greeting, setGreeting] = useState('Good morning')
 
   useEffect(() => {
     getFreeVideos().then(setVideos)
     getAnnouncements().then(setAnnouncements)
+    getResetModule().then(setResetModule)
   }, [])
+
+  useEffect(() => {
+    if (user?.id && resetModule?.id) {
+      getResetProgress(user.id, resetModule.id).then(setResetProgress)
+    }
+  }, [user?.id, resetModule?.id])
 
   // Set greeting on client only to avoid SSR/client hydration mismatch (timezone differs)
   useEffect(() => {
@@ -39,8 +48,11 @@ export default function DashboardPage() {
   }, [])
 
   const latestVideos = videos.slice(0, 3)
-  const olderVideos = videos.slice(3, 6)
   const latestAnnouncement = announcements.find(a => a.isNew) ?? announcements[0]
+
+  const completedCount = resetModule
+    ? resetModule.lessons.filter(l => resetProgress.completedVideoIds.includes(l.id)).length
+    : 0
 
   return (
     <div className="dashboard-bg min-h-full">
@@ -54,103 +66,131 @@ export default function DashboardPage() {
               {greeting},{' '}
               <span style={{ color: '#c9a84c' }}>{user?.name?.split(' ')[0] ?? 'Trader'}</span>.
             </h1>
-            <p className="text-[#5a5a66] text-sm mt-1.5">
-              Your weekly analyst briefings are ready to watch.
-            </p>
           </motion.div>
+        </motion.div>
+
+        {/* ── The Reset — primary entry point ─────────────── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
+        >
+          <ResetHeroCard module={resetModule} completedCount={completedCount} />
         </motion.div>
 
         {/* ── Announcement banner ───────────────────────────── */}
         {latestAnnouncement && (
           <motion.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
+            transition={{ duration: 0.4, delay: 0.18, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
           >
             <Link
               href="/dashboard/announcements"
               className="group flex items-center gap-4 px-5 py-4 rounded-2xl"
               style={{
-                background: 'rgba(201,168,76,0.05)',
-                border: '1px solid rgba(201,168,76,0.16)',
-                borderLeft: '3px solid rgba(201,168,76,0.5)',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.07)',
                 transition: 'background 0.2s ease',
               }}
             >
-              <Bell size={15} className="text-[#c9a84c] shrink-0" strokeWidth={1.75} />
+              <Bell size={14} className="text-[#5a5a66] shrink-0" strokeWidth={1.75} />
               <div className="flex-1 min-w-0">
-                <span className="text-[#c9a84c] text-xs font-semibold mr-2">{latestAnnouncement.title}</span>
+                <span className="text-[#8e8e9a] text-xs font-semibold mr-2">{latestAnnouncement.title}</span>
                 <span className="text-[#5a5a66] text-xs line-clamp-1">{latestAnnouncement.body}</span>
               </div>
-              <ArrowRight size={14} className="text-[#5a5a66] shrink-0 group-hover:text-[#c9a84c] group-hover:translate-x-0.5 transition-all duration-200" />
+              <ArrowRight size={13} className="text-[#5a5a66] shrink-0 group-hover:text-[#c9a84c] group-hover:translate-x-0.5 transition-all duration-200" />
             </Link>
           </motion.div>
         )}
 
-        {/* ── Latest Videos ──────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.18, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
-        >
-          <div className="flex items-end justify-between mb-6">
-            <div>
-              <p className="section-label mb-1.5">{latestAnnouncement?.title ?? 'This week'}</p>
-              <h2 className="text-white font-medium text-lg tracking-tight">Latest Videos</h2>
-            </div>
-            <Link href="/dashboard/free-videos"
-              className="flex items-center gap-1.5 text-xs text-[#c9a84c] hover:text-[#e8c96d] transition-colors font-medium"
-            >
-              View all <ArrowRight size={12} />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {latestVideos.map((video, i) => (
-              <motion.div key={video.id}
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.22 + i * 0.08, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
-              >
-                <VideoCard video={video} />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── More Briefings ────────────────────────────────── */}
-        {olderVideos.length > 0 && (
+        {/* ── Free Videos — secondary, supplementary content ─ */}
+        {latestVideos.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
+            transition={{ duration: 0.5, delay: 0.26, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
           >
-            <div className="flex items-end justify-between mb-6">
+            <div className="flex items-end justify-between mb-5">
               <div>
-                <p className="section-label mb-1.5">Recent</p>
-                <h2 className="text-white font-medium text-lg tracking-tight">More from the Team</h2>
+                <p className="section-label mb-1.5">Supplementary</p>
+                <h2 className="text-white font-medium text-base tracking-tight">Free Videos</h2>
+                <p className="text-[#5a5a66] text-xs mt-1">Extra analyst insight alongside The Reset.</p>
               </div>
+              <Link href="/dashboard/free-videos"
+                className="flex items-center gap-1.5 text-xs text-[#8e8e9a] hover:text-white transition-colors font-medium"
+              >
+                View all <ArrowRight size={12} />
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {olderVideos.map((video, i) => (
+              {latestVideos.map((video, i) => (
                 <motion.div key={video.id}
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.38 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
+                  transition={{ duration: 0.4, delay: 0.3 + i * 0.08, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
                 >
                   <VideoCard video={video} />
                 </motion.div>
               ))}
             </div>
-
-            <div className="mt-8 flex justify-center">
-              <Link
-                href="/dashboard/free-videos"
-                className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium text-[#8e8e9a] hover:text-white transition-colors"
-                style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}
-              >
-                View all briefings <ArrowRight size={14} />
-              </Link>
-            </div>
           </motion.div>
         )}
 
+      </div>
+    </div>
+  )
+}
+
+function ResetHeroCard({ module, completedCount }: { module: ResetModuleData | null; completedCount: number }) {
+  const lessonCount = module?.lessons.length ?? 0
+  const hasContent = lessonCount > 0
+  const isComplete = hasContent && completedCount === lessonCount
+  const hasStarted = hasContent && completedCount > 0 && !isComplete
+  const pct = hasContent ? Math.round((completedCount / lessonCount) * 100) : 0
+
+  const heading = isComplete ? "You've completed The Reset" : hasStarted ? 'Continue The Reset' : 'Start The Reset'
+  const cta = isComplete ? 'Review lessons' : hasStarted ? 'Continue' : 'Start The Reset'
+
+  const subtext = !hasContent
+    ? 'A free, structured beginner course from the 5GM mentors — lessons are being uploaded now.'
+    : hasStarted
+    ? `${completedCount} of ${lessonCount} lessons complete. Pick up where you left off.`
+    : isComplete
+    ? 'You’ve worked through every lesson. Revisit any of them, any time.'
+    : `${lessonCount} structured lesson${lessonCount === 1 ? '' : 's'} from the 5GM mentors, free — start from lesson one.`
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden p-6 sm:p-8"
+      style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.16)' }}
+    >
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 60% at 15% 0%, rgba(201,168,76,0.07) 0%, transparent 60%)' }} />
+      <div className="relative flex flex-col sm:flex-row sm:items-center gap-6">
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'linear-gradient(135deg, #b8932e 0%, #e8c96d 50%, #c9a84c 100%)' }}
+        >
+          <RotateCcw size={20} className="text-black" strokeWidth={2} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-1.5">The Reset · Free Course</p>
+          <h2 className="text-white text-xl sm:text-2xl font-medium tracking-tight mb-1.5">{heading}</h2>
+          <p className="text-[#8e8e9a] text-sm leading-relaxed max-w-xl">{subtext}</p>
+
+          {hasContent && (hasStarted || isComplete) && (
+            <div className="mt-4 max-w-xs">
+              <div className="h-1 bg-[rgba(255,255,255,0.07)] rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#c9a84c' }} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Link
+          href="/dashboard/the-reset"
+          className="group flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#c9a84c] text-black font-semibold text-sm hover:bg-[#e8c96d] transition-all shrink-0"
+        >
+          {isComplete && <CheckCircle2 size={15} />}
+          {cta}
+          <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       </div>
     </div>
   )

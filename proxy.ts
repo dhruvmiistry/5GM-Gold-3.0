@@ -33,6 +33,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Protect /mentor routes (optimistic — role check happens server-side
+  // in app/mentor/layout.tsx, same pattern as /admin)
+  if (path.startsWith('/mentor') && !loggedIn) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
   return NextResponse.next()
 }
 

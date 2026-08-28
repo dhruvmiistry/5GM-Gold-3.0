@@ -19,6 +19,9 @@ export async function GET() {
     .in('status', ['published', 'scheduled'])
     .eq('access_level', 'free')
     .eq('processing_status', 'ready')
+    // Videos assigned to a module (e.g. The Reset) belong to that structured
+    // course, not the standalone Free Videos library — keep the two separate.
+    .is('module_id', null)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { DbVideo } from '@/lib/types'
 import VideoCard from '@/components/VideoCard'
 import MuxPlayer from '@/components/MuxPlayer'
+import { usePostVideoInvitation } from '@/components/mentorCalls/usePostVideoInvitation'
 import { Sparkles, X, Loader2 } from 'lucide-react'
 
 const fadeUp = {
@@ -22,6 +23,9 @@ export default function FreeVideosPage() {
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [playingVideo, setPlayingVideo] = useState<DbVideo | null>(null)
+  const { dialog: invitationDialog, onVideoEnded, resetGuard } = usePostVideoInvitation()
+
+  const playVideo = (video: DbVideo) => { resetGuard(); setPlayingVideo(video) }
 
   useEffect(() => {
     fetch('/api/videos/free')
@@ -127,7 +131,7 @@ export default function FreeVideosPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
                 >
-                  <VideoCard video={video} onPlay={setPlayingVideo} />
+                  <VideoCard video={video} onPlay={playVideo} />
                 </motion.div>
               ))}
             </motion.div>
@@ -173,11 +177,14 @@ export default function FreeVideosPage() {
               <MuxPlayer
                 playbackId={playingVideo.mux_playback_id}
                 title={playingVideo.title}
+                onEnded={() => { onVideoEnded(playingVideo.id); setPlayingVideo(null) }}
               />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {invitationDialog}
     </div>
   )
 }

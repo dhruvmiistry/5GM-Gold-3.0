@@ -7,7 +7,7 @@ export interface User {
   id: string
   name: string           // maps to full_name
   email: string
-  role: 'member' | 'admin'
+  role: 'member' | 'admin' | 'mentor'
   plan: 'free' | 'gold'
   accountType: 'free' | 'gold'  // alias for plan — keeps existing components working
   access_level: 'free' | 'gold'
