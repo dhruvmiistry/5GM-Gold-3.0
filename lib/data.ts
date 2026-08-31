@@ -11,6 +11,7 @@ import {
   mockMarketBreakdowns,
   mockStrategyVault,
   mockRevisionMaterials,
+  resetLessons,
   type Video,
   type Announcement,
   type LiveSession,
@@ -233,9 +234,15 @@ export interface ResetModuleData {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapResetLesson(row: any, now: number): ResetLessonVideo {
   const isLocked = row.status === 'scheduled' && row.release_date != null && new Date(row.release_date).getTime() > now
+  // Uploaded video titles are inconsistently formatted ("THE RESET - X",
+  // "The Reset : X", etc.) — sort_order maps 1:1 onto the curriculum, so
+  // prefer the clean canonical title from resetLessons for display and
+  // only fall back to the raw upload title if a lesson number is somehow
+  // unmatched.
+  const curriculumTitle = resetLessons.find(l => l.number === row.sort_order)?.title
   return {
     id: row.id,
-    title: row.title,
+    title: curriculumTitle ?? row.title,
     description: row.description ?? '',
     thumbnail: row.thumbnail_url ?? (row.mux_playback_id ? `https://image.mux.com/${row.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5` : null),
     // Same anti-bypass measure as the Free Videos route (app/api/videos/free/route.ts):
