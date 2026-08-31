@@ -2,10 +2,14 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMember } from '@/lib/auth/verifyRole'
 import { hasAnyMentorTemplateCoverage } from '@/lib/mentorCalls/availability'
 import { DEFAULT_CALL_DURATION_MINUTES, MIN_NOTICE_HOURS } from '@/lib/mentorCalls/config'
+import { requireMentorCallsEnabled } from '@/lib/mentorCalls/featureFlag'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET: the calling member's own bookings.
 export async function GET() {
+  const blocked = await requireMentorCallsEnabled()
+  if (blocked) return blocked
+
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -21,6 +25,9 @@ export async function GET() {
 
 // POST: request a call. No mentor picker — start_at/duration only.
 export async function POST(request: NextRequest) {
+  const blocked = await requireMentorCallsEnabled()
+  if (blocked) return blocked
+
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

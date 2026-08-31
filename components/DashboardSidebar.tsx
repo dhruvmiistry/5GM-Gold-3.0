@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import {
   LayoutDashboard,
@@ -27,11 +28,15 @@ interface NavItem {
 }
 
 // Structured learning path — shown first and never locked.
-const primaryNavItems: NavItem[] = [
+const basePrimaryNavItems: NavItem[] = [
   { label: 'Dashboard',    href: '/dashboard',              icon: LayoutDashboard, locked: false },
   { label: 'The Reset',    href: '/dashboard/the-reset',    icon: RotateCcw,       locked: false },
-  { label: 'Mentor Calls', href: '/dashboard/mentor-calls', icon: PhoneCall,       locked: false },
 ]
+
+// Hidden until the server confirms the feature is live — defaults to
+// hidden while the check is in flight, so there's no flash of a nav item
+// that then disappears once mentor calls turn out to be disabled.
+const mentorCallsNavItem: NavItem = { label: 'Mentor Calls', href: '/dashboard/mentor-calls', icon: PhoneCall, locked: false }
 
 // Secondary/free-access items shown below the learning path.
 const secondaryNavItems: NavItem[] = [
@@ -55,6 +60,18 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
   const { user } = useAuth()
   const hasGoldAccess = user?.plan === 'gold' || user?.role === 'admin'
   const isAdmin = user?.role === 'admin'
+
+  const [mentorCallsEnabled, setMentorCallsEnabled] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/mentor-calls/enabled')
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setMentorCallsEnabled(!!d.enabled) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  const primaryNavItems = mentorCallsEnabled ? [...basePrimaryNavItems, mentorCallsNavItem] : basePrimaryNavItems
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">

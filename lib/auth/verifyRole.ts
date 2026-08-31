@@ -40,3 +40,17 @@ export async function verifyMember(): Promise<User | null> {
   const { data: { user } } = await supabase.auth.getUser()
   return user ?? null
 }
+
+// Narrower than verifyAdmin(): the 'admin' role currently covers 6 real
+// staff accounts, but some controls (e.g. the mentor_calls_enabled release
+// switch) are meant for the developer alone, not general admin staff.
+// Locked to a single email via env var rather than a DB flag, since this
+// is a deploy-time decision, not something meant to be reassignable from
+// the admin UI itself.
+export async function verifyDeveloper(): Promise<User | null> {
+  const developerEmail = process.env.DEVELOPER_EMAIL
+  if (!developerEmail) return null
+  const authed = await getAuthedProfile()
+  if (!authed) return null
+  return authed.user.email?.toLowerCase() === developerEmail.toLowerCase() ? authed.user : null
+}

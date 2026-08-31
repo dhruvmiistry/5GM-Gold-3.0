@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMember } from '@/lib/auth/verifyRole'
 import { getBookingMessages, sendBookingMessage, markMessagesRead, getLastReadAt } from '@/lib/mentorCalls/messages'
+import { requireMentorCallsEnabled } from '@/lib/mentorCalls/featureFlag'
 import { NextRequest, NextResponse } from 'next/server'
 
 async function verifyOwnership(admin: ReturnType<typeof createAdminClient>, bookingId: string, userId: string) {
@@ -9,6 +10,9 @@ async function verifyOwnership(admin: ReturnType<typeof createAdminClient>, book
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const blocked = await requireMentorCallsEnabled()
+  if (blocked) return blocked
+
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -24,6 +28,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const blocked = await requireMentorCallsEnabled()
+  if (blocked) return blocked
+
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

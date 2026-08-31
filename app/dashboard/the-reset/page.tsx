@@ -11,8 +11,9 @@ import { resetLessons as previewLessons } from '@/lib/mockData'
 import { formatDuration } from '@/lib/utils'
 import MuxPlayer from '@/components/MuxPlayer'
 import { usePostVideoInvitation } from '@/components/mentorCalls/usePostVideoInvitation'
+import LaunchCountdown from '@/components/theReset/LaunchCountdown'
 import {
-  Loader2, RotateCcw, Play, CheckCircle2, Circle, X, Clock,
+  Loader2, RotateCcw, Play, CheckCircle2, Circle, X, Clock, Lock,
 } from 'lucide-react'
 
 const fadeUp = {
@@ -41,9 +42,9 @@ export default function TheResetPage() {
 
   const playLesson = (lesson: ResetLessonVideo) => { resetGuard(); setPlayingLesson(lesson) }
 
-  useEffect(() => {
-    getResetModule().then(m => { setModule(m); setLoading(false) })
-  }, [])
+  const loadModule = () => getResetModule().then(m => { setModule(m); setLoading(false) })
+
+  useEffect(() => { loadModule() }, [])
 
   useEffect(() => {
     if (user?.id && module?.id) {
@@ -54,6 +55,10 @@ export default function TheResetPage() {
   const lessonIds = useMemo(() => module?.lessons.map(l => l.id) ?? [], [module])
   const completedCount = module ? module.lessons.filter(l => completedIds.includes(l.id)).length : 0
   const hasContent = (module?.lessons.length ?? 0) > 0
+  const unlockedCount = module ? module.lessons.filter(l => !l.isLocked).length : 0
+  // The curriculum is a fixed 20 lessons — used as the progress denominator
+  // so it matches the dashboard hero card even while fewer are linked/live.
+  const totalLessonCount = previewLessons.length
 
   const toggleComplete = async (lesson: ResetLessonVideo) => {
     if (!user?.id || !module?.id) return
@@ -103,8 +108,13 @@ export default function TheResetPage() {
           </motion.p>
         </motion.div>
 
-        {/* Progress summary — only shown once there's something to track */}
-        {hasContent && (
+        {/* Launch countdown — shown while the course is still locked */}
+        {module?.launchAt && (
+          <LaunchCountdown targetIso={module.launchAt} onElapsed={loadModule} />
+        )}
+
+        {/* Progress summary — only shown once at least one lesson has unlocked */}
+        {hasContent && unlockedCount > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className="flex items-center gap-4 px-5 py-4 rounded-2xl"
@@ -113,16 +123,16 @@ export default function TheResetPage() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white text-sm font-medium">
-                  {completedCount} of {module!.lessons.length} lessons complete
+                  {completedCount} of {totalLessonCount} lessons complete
                 </span>
                 <span className="text-[#c9a84c] text-xs font-mono">
-                  {Math.round((completedCount / module!.lessons.length) * 100)}%
+                  {Math.round((completedCount / totalLessonCount) * 100)}%
                 </span>
               </div>
               <div className="h-1.5 bg-[rgba(255,255,255,0.07)] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(completedCount / module!.lessons.length) * 100}%`, background: '#c9a84c' }}
+                  style={{ width: `${(completedCount / totalLessonCount) * 100}%`, background: '#c9a84c' }}
                 />
               </div>
             </div>
@@ -141,6 +151,29 @@ export default function TheResetPage() {
                 <div className="space-y-2">
                   {group.items.map(lesson => {
                     const isDone = completedIds.includes(lesson.id)
+
+                    if (lesson.isLocked) {
+                      return (
+                        <div key={lesson.id}
+                          className="flex items-center gap-4 p-4 rounded-2xl"
+                          style={{ background: 'rgba(17,17,19,0.5)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          <div className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center"
+                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                            <Lock size={14} className="text-[#5a5a66]" strokeWidth={1.75} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[#8e8e9a] text-sm font-medium leading-snug truncate">{lesson.title}</p>
+                            <p className="text-[#5a5a66] text-[11px] mt-1">{lesson.analyst}</p>
+                          </div>
+                          <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full text-[#5a5a66]"
+                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                            Locked
+                          </span>
+                        </div>
+                      )
+                    }
+
                     return (
                       <div key={lesson.id}
                         className="flex items-center gap-4 p-4 rounded-2xl card card-gold"
@@ -148,10 +181,15 @@ export default function TheResetPage() {
                       >
                         <button
                           onClick={() => playLesson(lesson)}
-                          className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center transition-all"
+                          className="relative w-16 h-11 rounded-xl shrink-0 overflow-hidden flex items-center justify-center transition-all"
                           style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.22)' }}
                         >
-                          <Play size={14} className="text-[#c9a84c] ml-0.5" strokeWidth={2} />
+                          {lesson.thumbnail && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={lesson.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          )}
+                          <div className="absolute inset-0" style={{ background: lesson.thumbnail ? 'rgba(0,0,0,0.35)' : 'transparent' }} />
+                          <Play size={14} className="relative text-[#c9a84c] ml-0.5" strokeWidth={2} />
                         </button>
 
                         <button onClick={() => playLesson(lesson)} className="flex-1 min-w-0 text-left">

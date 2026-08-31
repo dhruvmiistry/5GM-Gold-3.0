@@ -9,7 +9,13 @@ import { formatDate, formatDuration } from '@/lib/utils'
 import { useCountdown } from '@/lib/hooks'
 import { Play, Bell, ArrowRight, Lock, RotateCcw, CheckCircle2 } from 'lucide-react'
 import Badge from '@/components/Badge'
-import type { Video, Announcement } from '@/lib/mockData'
+import MiniCountdown from '@/components/theReset/MiniCountdown'
+import { resetLessons, type Video, type Announcement } from '@/lib/mockData'
+
+// The Reset is a fixed 20-lesson curriculum — shown as 20 everywhere on the
+// dashboard regardless of how many lessons are currently linked/uploaded in
+// Supabase, so the count doesn't visibly shrink while the last few land.
+const TOTAL_RESET_LESSONS = resetLessons.length
 
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
@@ -139,17 +145,29 @@ export default function DashboardPage() {
 }
 
 function ResetHeroCard({ module, completedCount }: { module: ResetModuleData | null; completedCount: number }) {
-  const lessonCount = module?.lessons.length ?? 0
-  const hasContent = lessonCount > 0
+  const linkedCount = module?.lessons.length ?? 0
+  const hasContent = linkedCount > 0
+  // Display count is always the full curriculum size (20), not however many
+  // happen to be linked in Supabase right now — the course doesn't visibly
+  // shrink while the last couple of lessons are still being uploaded.
+  const lessonCount = TOTAL_RESET_LESSONS
+  const unlockedCount = module?.lessons.filter(l => !l.isLocked).length ?? 0
+  const isLaunching = hasContent && unlockedCount === 0 && !!module?.launchAt
   const isComplete = hasContent && completedCount === lessonCount
   const hasStarted = hasContent && completedCount > 0 && !isComplete
   const pct = hasContent ? Math.round((completedCount / lessonCount) * 100) : 0
 
-  const heading = isComplete ? "You've completed The Reset" : hasStarted ? 'Continue The Reset' : 'Start The Reset'
-  const cta = isComplete ? 'Review lessons' : hasStarted ? 'Continue' : 'Start The Reset'
+  const launchLabel = module?.launchAt
+    ? new Intl.DateTimeFormat('en-GB', { weekday: 'long', hour: 'numeric', minute: '2-digit', timeZone: 'Europe/London' }).format(new Date(module.launchAt))
+    : null
+
+  const heading = isLaunching ? 'The Reset launches soon' : isComplete ? "You've completed The Reset" : hasStarted ? 'Continue The Reset' : 'Start The Reset'
+  const cta = isLaunching ? 'View countdown' : isComplete ? 'Review lessons' : hasStarted ? 'Continue' : 'Start The Reset'
 
   const subtext = !hasContent
     ? 'A free, structured beginner course from the 5GM mentors — lessons are being uploaded now.'
+    : isLaunching
+    ? `${lessonCount} lessons, free — unlocking ${launchLabel} UK time.`
     : hasStarted
     ? `${completedCount} of ${lessonCount} lessons complete. Pick up where you left off.`
     : isComplete
@@ -173,6 +191,12 @@ function ResetHeroCard({ module, completedCount }: { module: ResetModuleData | n
           <p className="text-[#c9a84c] text-xs font-semibold uppercase tracking-widest mb-1.5">The Reset · Free Course</p>
           <h2 className="text-white text-xl sm:text-2xl font-medium tracking-tight mb-1.5">{heading}</h2>
           <p className="text-[#8e8e9a] text-sm leading-relaxed max-w-xl">{subtext}</p>
+
+          {isLaunching && module?.launchAt && (
+            <p className="mt-2 text-xs text-[#5a5a66] flex items-center gap-1.5">
+              Unlocks in <MiniCountdown targetIso={module.launchAt} />
+            </p>
+          )}
 
           {hasContent && (hasStarted || isComplete) && (
             <div className="mt-4 max-w-xs">

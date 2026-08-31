@@ -2,10 +2,14 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMember } from '@/lib/auth/verifyRole'
 import { getAggregateSlotsForDate } from '@/lib/mentorCalls/availability'
 import { DEFAULT_CALL_DURATION_MINUTES, MIN_NOTICE_HOURS, MAX_HORIZON_DAYS } from '@/lib/mentorCalls/config'
+import { requireMentorCallsEnabled } from '@/lib/mentorCalls/featureFlag'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET ?date=YYYY-MM-DD — bookable start times for that calendar date.
 export async function GET(request: NextRequest) {
+  const blocked = await requireMentorCallsEnabled()
+  if (blocked) return blocked
+
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import MessageThread from '@/components/mentorCalls/MessageThread'
 import StaffNotes from '@/components/mentorCalls/StaffNotes'
-import { Loader2, Search, RefreshCw, Link2, Check, ChevronDown } from 'lucide-react'
+import { Loader2, Search, RefreshCw, Link2, Check, ChevronDown, Power, AlertTriangle } from 'lucide-react'
 
 type Booking = {
   id: string; status: string; start_at: string; duration_minutes: number
@@ -27,6 +27,116 @@ function StatusBadge({ status }: { status: string }) {
     no_show: 'text-red-400 bg-red-400/10 border-red-400/20',
   }
   return <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${map[status] ?? map.confirmed}`}>{status.replace('_', ' ')}</span>
+}
+
+type FlagHistoryRow = {
+  actor_id: string
+  created_at: string
+  metadata: { previous_value?: boolean; new_value?: boolean }
+  actor: { full_name: string | null; email: string | null } | null
+}
+
+// Developer-only release-control toggle for mentor_calls_enabled. OFF by
+// default and never flipped automatically — this is the one place the
+// flag gets turned on for every member, and every change is written to
+// staff_audit_log with who and when, surfaced right here as recent
+// history. The API behind this (verifyDeveloper()) is locked to a single
+// account, not the general 'admin' role — the other admin accounts get a
+// 403, so this card hides itself entirely for them rather than showing a
+// toggle that would just fail when clicked.
+function ReleaseControlCard({ showToast }: { showToast: (msg: string) => void }) {
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [history, setHistory] = useState<FlagHistoryRow[]>([])
+  const [busy, setBusy] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  const load = useCallback(() => {
+    fetch('/api/admin/mentor-calls/flag')
+      .then(r => {
+        if (!r.ok) { setVisible(false); return null }
+        setVisible(true)
+        return r.json()
+      })
+      .then(d => { if (d) { setEnabled(!!d.enabled); setHistory(Array.isArray(d.history) ? d.history : []) } })
+      .catch(() => setVisible(false))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  if (!visible) return null
+
+  const toggle = async () => {
+    const next = !enabled
+    setBusy(true)
+    setConfirming(false)
+    const res = await fetch('/api/admin/mentor-calls/flag', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: next }),
+    })
+    setBusy(false)
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Failed to update'); return }
+    showToast(next ? 'Mentor calls enabled for members' : 'Mentor calls disabled for members')
+    load()
+  }
+
+  return (
+    <div className="p-5 rounded-2xl space-y-4" style={{ background: 'rgba(17,17,19,0.7)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: enabled ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${enabled ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.08)'}` }}>
+            <Power size={15} className={enabled ? 'text-emerald-400' : 'text-[#5a5a66]'} />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Enable mentor calls</p>
+            <p className="text-[#8e8e9a] text-xs mt-0.5 max-w-md">
+              Make mentor booking, call credits, booking conversations, and eligible post-video invitations available to members.
+            </p>
+            <p className="text-[10px] mt-1.5 font-semibold uppercase tracking-widest" style={{ color: enabled ? '#34d399' : '#5a5a66' }}>
+              Currently {enabled === null ? '…' : enabled ? 'ON — visible to members' : 'OFF — hidden from members'}
+            </p>
+          </div>
+        </div>
+
+        {!confirming ? (
+          <button onClick={() => setConfirming(true)} disabled={busy || enabled === null}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 shrink-0"
+            style={enabled
+              ? { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)', color: '#f87171' }
+              : { background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399' }}>
+            {enabled ? 'Disable' : 'Enable'}
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => setConfirming(false)} className="px-3 py-2.5 rounded-xl text-xs font-medium text-[#8e8e9a]" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              Cancel
+            </button>
+            <button onClick={toggle} disabled={busy}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium disabled:opacity-50"
+              style={enabled
+                ? { background: 'rgba(239,68,68,0.14)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }
+                : { background: 'rgba(52,211,153,0.14)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
+              {busy ? <Loader2 size={12} className="animate-spin" /> : <AlertTriangle size={12} />}
+              Confirm {enabled ? 'disable' : 'enable'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {history.length > 0 && (
+        <div className="pt-3 space-y-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <p className="section-label">Recent changes</p>
+          {history.map((h, i) => (
+            <p key={i} className="text-[11px] text-[#5a5a66]">
+              {h.actor?.full_name || h.actor?.email || h.actor_id} turned it{' '}
+              <span className={h.metadata.new_value ? 'text-emerald-400' : 'text-red-400'}>{h.metadata.new_value ? 'ON' : 'OFF'}</span>
+              {' · '}{new Date(h.created_at).toLocaleString('en-GB')}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function AdminMentorCallsPage() {
@@ -104,6 +214,8 @@ export default function AdminMentorCallsPage() {
           <p className="section-label mb-1.5">Admin</p>
           <h1 className="text-2xl font-light text-white tracking-tight">Mentor Calls</h1>
         </div>
+
+        <ReleaseControlCard showToast={showToast} />
 
         {/* Credits panel */}
         <div className="p-5 rounded-2xl space-y-4" style={{ background: 'rgba(17,17,19,0.7)', border: '1px solid rgba(255,255,255,0.07)' }}>

@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMember } from '@/lib/auth/verifyRole'
+import { requireMentorCallsEnabled } from '@/lib/mentorCalls/featureFlag'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Member cancels their own booking. Ownership is checked here (never
@@ -7,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 // cancel_kind='member', which is what makes the 12h-cutoff refund rule
 // apply — a mentor/admin cancellation uses a different route/kind.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const blocked = await requireMentorCallsEnabled()
+  if (blocked) return blocked
+
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

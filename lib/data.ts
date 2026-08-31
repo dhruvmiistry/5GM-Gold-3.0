@@ -218,6 +218,8 @@ export interface ResetLessonVideo {
   analyst: string
   stage: string
   sortOrder: number
+  releaseDate: string | null
+  isLocked: boolean
 }
 
 export interface ResetModuleData {
@@ -225,20 +227,26 @@ export interface ResetModuleData {
   title: string
   description: string
   lessons: ResetLessonVideo[]
+  launchAt: string | null // earliest still-future releaseDate among locked lessons, for the countdown
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapResetLesson(row: any): ResetLessonVideo {
+function mapResetLesson(row: any, now: number): ResetLessonVideo {
+  const isLocked = row.status === 'scheduled' && row.release_date != null && new Date(row.release_date).getTime() > now
   return {
     id: row.id,
     title: row.title,
     description: row.description ?? '',
     thumbnail: row.thumbnail_url ?? (row.mux_playback_id ? `https://image.mux.com/${row.mux_playback_id}/thumbnail.jpg?width=640&height=360&time=5` : null),
-    muxPlaybackId: row.mux_playback_id ?? null,
+    // Same anti-bypass measure as the Free Videos route (app/api/videos/free/route.ts):
+    // strip the playback id for anything still locked so an early client can't play it.
+    muxPlaybackId: isLocked ? null : (row.mux_playback_id ?? null),
     duration: parseDuration(row.duration),
     analyst: row.analyst_name ?? 'Analyst',
     stage: row.category ?? 'The Reset',
     sortOrder: row.sort_order ?? 0,
+    releaseDate: row.release_date ?? null,
+    isLocked,
   }
 }
 
@@ -260,20 +268,31 @@ export async function getResetModule(): Promise<ResetModuleData | null> {
       return null
     }
 
+    // 'scheduled' lessons are included alongside 'published' ones so the
+    // course can show a locked, countdown-timed preview ahead of its
+    // release_date — same pattern as the Free Videos list.
     const { data: videos, error: videosError } = await supabase
       .from('videos')
-      .select('id, title, description, thumbnail_url, duration, category, analyst_name, mux_playback_id, processing_status, sort_order')
+      .select('id, title, description, thumbnail_url, duration, category, analyst_name, mux_playback_id, processing_status, sort_order, status, release_date')
       .eq('module_id', moduleRow.id)
-      .eq('status', 'published')
+      .in('status', ['published', 'scheduled'])
       .eq('processing_status', 'ready')
       .order('sort_order', { ascending: true })
     if (videosError) console.error('getResetModule videos failed:', videosError.message)
+
+    const now = Date.now()
+    const lessons = (videos ?? []).map(row => mapResetLesson(row, now))
+    const launchAt = lessons
+      .filter(l => l.isLocked && l.releaseDate)
+      .map(l => l.releaseDate as string)
+      .sort()[0] ?? null
 
     return {
       id: moduleRow.id,
       title: moduleRow.title,
       description: moduleRow.description ?? '',
-      lessons: (videos ?? []).map(mapResetLesson),
+      lessons,
+      launchAt,
     }
   } catch (e) { console.error('getResetModule failed:', e); return null }
 }

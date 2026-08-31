@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMember } from '@/lib/auth/verifyRole'
+import { isMentorCallsEnabled } from '@/lib/mentorCalls/featureFlag'
 import { NextResponse } from 'next/server'
 
 const FREQUENCY_CAP_HOURS = 24
@@ -8,9 +9,18 @@ const FREQUENCY_CAP_HOURS = 24
 // Checked server-side, not left to client-side localStorage — the 24h cap
 // and the "already has a booking" / "zero credits" suppression rules are
 // real business rules, not just UX conveniences.
+//
+// Degrades gracefully (200 { eligible: false }) rather than 404ing when the
+// feature is disabled — this endpoint drives a UI popup, not a protected
+// resource, so failing soft avoids a console error on every video watched
+// while mentor calls are off, with the same end result: no invitation shown.
 export async function GET() {
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (!(await isMentorCallsEnabled())) {
+    return NextResponse.json({ eligible: false, plan: null, balance: 0 })
+  }
 
   const admin = createAdminClient()
 
@@ -37,6 +47,10 @@ export async function GET() {
 export async function POST() {
   const user = await verifyMember()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (!(await isMentorCallsEnabled())) {
+    return NextResponse.json({ success: false })
+  }
 
   const admin = createAdminClient()
   await admin.from('post_video_invitation_prompts').upsert(
