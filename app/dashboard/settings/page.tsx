@@ -187,13 +187,13 @@ export default function SettingsPage() {
 
               {/* Read-only fields */}
               {[
-                { label: 'Email', value: user?.email ?? '—' },
-                { label: 'Trading Experience', value: user?.experience ?? '—' },
-                { label: 'Member Since', value: user?.joinedDate ? new Date(user.joinedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
+                { label: 'Email', value: user?.email ?? '—', capitalize: false },
+                { label: 'Trading Experience', value: user?.experience ?? '—', capitalize: true },
+                { label: 'Member Since', value: user?.joinedDate ? new Date(user.joinedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—', capitalize: false },
               ].map(field => (
                 <div key={field.label}>
                   <label className="block text-[#3a3a42] text-[10.5px] uppercase tracking-widest mb-1.5">{field.label}</label>
-                  <div className="px-4 py-3 rounded-xl text-sm text-[#8e8e9a] capitalize"
+                  <div className={`px-4 py-3 rounded-xl text-sm text-[#8e8e9a] ${field.capitalize ? 'capitalize' : ''}`}
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
                     {field.value}
