@@ -225,7 +225,7 @@ export const mockTeam: TeamMember[] = [
 ]
 
 export const resetLessons: ResetLesson[] = [
-  { number: 1, title: 'Welcome to 5GM Gold', presenter: 'Bani', stage: 'Foundations' },
+  { number: 1, title: 'Where Everything Changes', presenter: 'Bani', stage: 'Foundations' },
   { number: 2, title: 'What Is Trading?', presenter: 'Albin', stage: 'Foundations' },
   { number: 3, title: 'Trading Platforms & Chart Basics', presenter: 'Mubz', stage: 'Foundations' },
   { number: 4, title: 'Support & Resistance', presenter: 'Mubz', stage: 'Foundations' },

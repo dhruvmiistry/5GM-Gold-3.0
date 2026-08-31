@@ -158,9 +158,12 @@ export default function TheResetPage() {
                           className="flex items-center gap-4 p-4 rounded-2xl"
                           style={{ background: 'rgba(17,17,19,0.5)', border: '1px solid rgba(255,255,255,0.06)' }}
                         >
-                          <div className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center"
+                          <div className="relative w-14 h-14 rounded-xl shrink-0 flex items-center justify-center"
                             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                            <Lock size={14} className="text-[#5a5a66]" strokeWidth={1.75} />
+                            <span className="text-[#5a5a66] font-mono font-bold text-lg tabular-nums opacity-40">
+                              {String(lesson.sortOrder).padStart(2, '0')}
+                            </span>
+                            <Lock size={11} className="absolute bottom-1 right-1 text-[#5a5a66]" strokeWidth={2} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[#8e8e9a] text-sm font-medium leading-snug truncate">{lesson.title}</p>
@@ -181,15 +184,13 @@ export default function TheResetPage() {
                       >
                         <button
                           onClick={() => playLesson(lesson)}
-                          className="relative w-16 h-11 rounded-xl shrink-0 overflow-hidden flex items-center justify-center transition-all"
-                          style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.22)' }}
+                          className="group/thumb relative w-14 h-14 rounded-xl shrink-0 overflow-hidden flex items-center justify-center transition-all"
+                          style={{ background: 'linear-gradient(135deg, #b8932e 0%, #e8c96d 50%, #c9a84c 100%)' }}
                         >
-                          {lesson.thumbnail && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={lesson.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                          )}
-                          <div className="absolute inset-0" style={{ background: lesson.thumbnail ? 'rgba(0,0,0,0.35)' : 'transparent' }} />
-                          <Play size={14} className="relative text-[#c9a84c] ml-0.5" strokeWidth={2} />
+                          <span className="text-black font-mono font-bold text-lg tabular-nums transition-opacity group-hover/thumb:opacity-0">
+                            {String(lesson.sortOrder).padStart(2, '0')}
+                          </span>
+                          <Play size={16} className="absolute text-black ml-0.5 opacity-0 group-hover/thumb:opacity-100 transition-opacity" strokeWidth={2} fill="black" />
                         </button>
 
                         <button onClick={() => playLesson(lesson)} className="flex-1 min-w-0 text-left">
