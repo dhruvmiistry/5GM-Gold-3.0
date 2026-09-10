@@ -3,11 +3,16 @@ import {
   sendRequestReceivedEmail, sendBookingConfirmedEmail, sendMentorAssignedEmail,
   sendMeetingDetailsEmail, sendBookingCancellationEmail, sendBookingRescheduleEmail,
   sendBookingReminderEmail, type BookingEmailParams,
+  sendGoldApplicationReceivedEmail, sendGoldInvitedToCallEmail,
+  sendGoldAcceptedWeekOneEmail, sendGoldApplicationRejectedEmail,
 } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Vercel Cron (or a manual authenticated trigger, e.g. for local testing)
-// hits this on a schedule — proposed every 5 minutes (see vercel.json).
+// Vercel Cron invokes the configured path with GET (see vercel.json and
+// https://vercel.com/docs/cron-jobs/manage-cron-jobs) — POST is kept as an
+// alias so a manual authenticated trigger (e.g. curl, for local testing)
+// still works. Both were previously only wired to POST, which meant every
+// real Cron invocation got a 405 and this sweep never actually ran.
 // At-least-once delivery on that sweep interval, not exact-to-the-second —
 // documented honestly rather than claiming perfect exactly-once.
 export const maxDuration = 60
@@ -50,7 +55,84 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json(results)
+  // Second, independent job queue — one Vercel Cron invocation processes
+  // both rather than adding a second cron entry (Hobby-plan cron count is
+  // limited; see vercel.json).
+  const { data: goldJobs, error: goldClaimError } = await admin.rpc('claim_gold_notification_jobs', { p_limit: 20 })
+  if (goldClaimError) return NextResponse.json({ error: goldClaimError.message }, { status: 500 })
+
+  const goldResults = { processed: 0, sent: 0, skipped: 0, failed: 0 }
+
+  for (const job of (goldJobs ?? []) as GoldNotificationJob[]) {
+    goldResults.processed++
+    try {
+      const outcome = await processGoldJob(admin, job)
+      if (outcome === 'sent') goldResults.sent++
+      else goldResults.skipped++
+    } catch (e) {
+      goldResults.failed++
+      const message = e instanceof Error ? e.message : 'Unknown error'
+      await admin.from('gold_application_notification_jobs').update({ status: 'failed', last_error: message }).eq('id', job.id)
+    }
+  }
+
+  return NextResponse.json({ mentorCalls: results, goldApplications: goldResults })
+}
+
+export const GET = POST
+
+type GoldNotificationJob = {
+  id: string
+  application_id: string
+  type: 'received' | 'invited_to_call' | 'accepted_week_one' | 'rejected'
+}
+
+async function processGoldJob(admin: ReturnType<typeof createAdminClient>, job: GoldNotificationJob): Promise<'sent' | 'skipped'> {
+  // Revalidate fresh — never trust anything beyond the application id from
+  // when the job was originally enqueued.
+  const { data: application } = await admin
+    .from('gold_applications')
+    .select('full_name, email, status')
+    .eq('id', job.application_id)
+    .single()
+
+  if (!application?.email) {
+    await admin.from('gold_application_notification_jobs').update({ status: 'skipped', last_error: 'application or email missing' }).eq('id', job.id)
+    return 'skipped'
+  }
+
+  const dashboardUrl = `${SITE_URL}/dashboard/gold`
+  let sendError: { message: string } | null = null
+
+  switch (job.type) {
+    case 'received': {
+      ({ error: sendError } = await sendGoldApplicationReceivedEmail(application.email, application.full_name, dashboardUrl))
+      break
+    }
+    case 'invited_to_call': {
+      const { data: config } = await admin.from('gold_funnel_config').select('value').eq('key', 'call_booking_url').maybeSingle()
+      const bookingUrl = typeof config?.value === 'string' ? config.value : null
+      if (!bookingUrl) {
+        await admin.from('gold_application_notification_jobs').update({ status: 'skipped', last_error: 'call_booking_url not configured' }).eq('id', job.id)
+        return 'skipped'
+      }
+      ({ error: sendError } = await sendGoldInvitedToCallEmail(application.email, application.full_name, dashboardUrl, bookingUrl))
+      break
+    }
+    case 'accepted_week_one': {
+      ({ error: sendError } = await sendGoldAcceptedWeekOneEmail(application.email, application.full_name, dashboardUrl))
+      break
+    }
+    case 'rejected': {
+      ({ error: sendError } = await sendGoldApplicationRejectedEmail(application.email, application.full_name, dashboardUrl))
+      break
+    }
+  }
+
+  if (sendError) throw new Error(sendError.message)
+
+  await admin.from('gold_application_notification_jobs').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', job.id)
+  return 'sent'
 }
 
 async function processJob(admin: ReturnType<typeof createAdminClient>, job: NotificationJob): Promise<'sent' | 'skipped'> {

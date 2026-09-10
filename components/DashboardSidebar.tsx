@@ -13,7 +13,6 @@ import {
   Shield,
   Bell,
   Settings,
-  Lock,
   ChevronRight,
   X,
   ShieldCheck,
@@ -71,6 +70,16 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
     return () => { cancelled = true }
   }, [])
 
+  const [goldFunnelEnabled, setGoldFunnelEnabled] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/gold/funnel-copy')
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setGoldFunnelEnabled(d.funnel_state && d.funnel_state !== 'hidden') })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
   const primaryNavItems = mentorCallsEnabled ? [...basePrimaryNavItems, mentorCallsNavItem] : basePrimaryNavItems
 
   const SidebarContent = () => (
@@ -118,6 +127,32 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
           })}
         </div>
 
+        {/* The Gold Desk — the funnel entry point deliberately stands out
+            from the plain nav rows above/below it: gradient badge, gold
+            shimmer sheen, pulsing dot, glow on the active page. */}
+        {goldFunnelEnabled && (
+          <div className="mb-3">
+            <Link
+              href="/dashboard/gold"
+              onClick={onMobileClose}
+              className="relative overflow-hidden flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all"
+              style={{
+                background: 'rgba(201,168,76,0.07)',
+                border: '1px solid rgba(201,168,76,0.24)',
+                boxShadow: pathname.startsWith('/dashboard/gold') ? '0 0 24px rgba(201,168,76,0.18)' : '0 0 16px rgba(201,168,76,0.06)',
+              }}
+            >
+              <div className="absolute inset-0 shimmer pointer-events-none" />
+              <div className="relative w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg, #b8932e 0%, #e8c96d 50%, #c9a84c 100%)' }}>
+                <Shield size={12} className="text-black" strokeWidth={2.25} />
+              </div>
+              <span className="relative flex-1 font-semibold text-sm text-gold-gradient">The Gold Desk</span>
+              <span className="relative w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+            </Link>
+          </div>
+        )}
+
         {/* Secondary — supplementary content, not the main path */}
         <div className="mb-3">
           <p className="section-label px-3 pb-2">More</p>
@@ -143,15 +178,6 @@ export default function DashboardSidebar({ mobileOpen = false, onMobileClose }: 
               </Link>
             )
           })}
-        </div>
-
-        {/* Gold — quiet, single row. Not open yet; not a sales pitch. */}
-        <div>
-          <div className="sidebar-link locked-nav cursor-default" title="Gold access is not open yet">
-            <Shield size={15} strokeWidth={1.75} />
-            <span className="flex-1 font-medium text-[#5a5a66]">Gold Programme</span>
-            <Lock size={10} className="text-[#5a5a66]" strokeWidth={2} />
-          </div>
         </div>
 
         {/* Admin Portal link */}

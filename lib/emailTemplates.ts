@@ -9,6 +9,10 @@ export function escapeHtml(s: string) {
 
 interface BookingEmailOptions {
   title: string
+  // Hidden inbox-preview snippet (the line Gmail/Apple Mail show next to
+  // the subject). Without one, clients fall back to whatever text starts
+  // the body — usually the eyebrow label, which reads as noise.
+  preheader?: string
   eyebrow?: string
   headline: string
   bodyHtml: string
@@ -16,18 +20,27 @@ interface BookingEmailOptions {
   ctaUrl?: string
 }
 
-function bookingEmailSkeleton({ title, eyebrow, headline, bodyHtml, ctaLabel, ctaUrl }: BookingEmailOptions) {
+function bookingEmailSkeleton({ title, preheader, eyebrow, headline, bodyHtml, ctaLabel, ctaUrl }: BookingEmailOptions) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="color-scheme" content="dark light"/>
+<meta name="supported-color-scheme" content="dark light"/>
 <title>${title}</title>
+<style>
+  @media only screen and (max-width:480px) {
+    .email-pad { padding-left:20px !important; padding-right:20px !important; }
+    .email-headline { font-size:20px !important; }
+  }
+</style>
 </head>
-<body style="margin:0;padding:0;background:#0a0a0b;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0b;padding:48px 24px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+<body style="margin:0;padding:0;background:#0a0a0b;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;opacity:0;">${escapeHtml(preheader)}${'&nbsp;&zwnj;'.repeat(20)}</div>` : ''}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0b;padding:48px 24px;">
+    <tr><td align="center" class="email-pad">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 
         <!-- Header -->
         <tr>
@@ -40,12 +53,12 @@ function bookingEmailSkeleton({ title, eyebrow, headline, bodyHtml, ctaLabel, ct
         <!-- Body -->
         <tr>
           <td style="padding:40px 0;">
-            <p style="margin:0 0 16px;font-size:22px;font-weight:600;color:#f5f5f7;">${headline}</p>
+            <p class="email-headline" style="margin:0 0 16px;font-size:22px;line-height:1.35;font-weight:600;color:#f5f5f7;">${headline}</p>
             ${bodyHtml}
-            ${ctaLabel && ctaUrl ? `<table cellpadding="0" cellspacing="0">
+            ${ctaLabel && ctaUrl ? `<table role="presentation" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="background:linear-gradient(135deg,#b8932e,#e8c96d,#c9a84c);border-radius:6px;">
-                  <a href="${ctaUrl}" style="display:inline-block;padding:12px 28px;color:#0a0a0b;font-size:14px;font-weight:600;text-decoration:none;">${ctaLabel}</a>
+                  <a href="${ctaUrl}" style="display:inline-block;padding:14px 28px;color:#0a0a0b;font-size:14px;font-weight:600;text-decoration:none;">${ctaLabel}</a>
                 </td>
               </tr>
             </table>` : ''}
@@ -221,6 +234,133 @@ export function bookingReminderHtml(b: BookingSummary, leadLabel: '24 hours' | '
         : `<p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">Joining details haven't been added yet — check back closer to the call.</p>`}`,
     ctaLabel: 'View Booking',
     ctaUrl: b.manageUrl,
+  })
+}
+
+// ── Gold Desk application emails ────────────────────────────────────────
+// Same skeleton as the booking-lifecycle emails above. Deliberately no
+// booking-calendar link anywhere except the invite email — the qualification
+// gate is the entire point of this flow.
+
+interface GoldApplicationEmailParams {
+  fullName: string
+  dashboardUrl: string
+}
+
+// A 3-step tracker (Applied / Call / Week 1) reused across received/invited/
+// accepted so a recipient always sees where they are in the funnel, not
+// just the single fact in front of them. Table-based (no flex/grid) since
+// this has to render in email clients, not a browser.
+const FUNNEL_STEPS = [
+  { key: 'received', label: 'Applied' },
+  { key: 'invited_to_call', label: 'Call' },
+  { key: 'accepted_week_one', label: 'Week 1' },
+] as const
+
+function funnelTrackerHtml(current: (typeof FUNNEL_STEPS)[number]['key']) {
+  const idx = FUNNEL_STEPS.findIndex(s => s.key === current)
+  const cells = FUNNEL_STEPS.map((step, i) => {
+    const done = i < idx
+    const active = i === idx
+    const circle = done
+      ? `<div style="width:26px;height:26px;line-height:26px;border-radius:50%;background:#c9a84c;color:#0a0a0b;font-size:13px;font-weight:700;margin:0 auto 8px;">&#10003;</div>`
+      : active
+      ? `<div style="width:26px;height:26px;line-height:26px;border-radius:50%;background:linear-gradient(135deg,#b8932e,#e8c96d,#c9a84c);color:#0a0a0b;font-size:12px;font-weight:700;margin:0 auto 8px;">${i + 1}</div>`
+      : `<div style="width:24px;height:24px;line-height:22px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);color:#5a5a66;font-size:12px;font-weight:600;margin:0 auto 8px;">${i + 1}</div>`
+    const labelColor = active ? '#f5f5f7' : done ? '#8e8e9a' : '#5a5a66'
+    const cell = `<td align="center" width="${Math.round(100 / FUNNEL_STEPS.length)}%">
+        ${circle}
+        <p style="margin:0;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:${labelColor};font-weight:600;">${step.label}</p>
+      </td>`
+    if (i === FUNNEL_STEPS.length - 1) return cell
+    const line = `<td width="1"><div style="height:1px;margin-top:13px;background:${done ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.08)'};"></div></td>`
+    return cell + line
+  })
+  return `<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px;"><tr>${cells.join('')}</tr></table>`
+}
+
+// Same visual language as detailsBlockHtml (dark card, gold-tinted border)
+// but for a bulleted list instead of a label/value table — used for the
+// "before your call" / "in the meantime" style asides.
+function tipListHtml(title: string, items: string[]) {
+  return `<table cellpadding="0" cellspacing="0" style="background:#111113;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 22px;margin:0 0 24px;width:100%;">
+    <tr><td>
+      <p style="margin:0 0 12px;font-size:11px;letter-spacing:2px;color:#5a5a66;text-transform:uppercase;">${escapeHtml(title)}</p>
+      ${items.map(item => `<p style="margin:0 0 8px;font-size:14px;color:#c7c7cf;line-height:1.6;"><span style="color:#c9a84c;">&bull;</span>&nbsp; ${escapeHtml(item)}</p>`).join('')}
+    </td></tr>
+  </table>`
+}
+
+export function goldApplicationReceivedHtml(p: GoldApplicationEmailParams) {
+  return bookingEmailSkeleton({
+    title: 'Application received — 5GM Gold',
+    preheader: "Our team is reviewing it now — here's what happens next.",
+    eyebrow: 'Week 1 Free',
+    headline: `Thanks, ${escapeHtml(p.fullName)} — we've got your application.`,
+    bodyHtml: `${funnelTrackerHtml('received')}
+      <p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        Our team is reviewing it now. If you're a fit for Week 1, we'll invite you to a short call
+        within the next few days — keep an eye on your inbox.
+      </p>`,
+    ctaLabel: 'Back to Dashboard',
+    ctaUrl: p.dashboardUrl,
+  })
+}
+
+export function goldInvitedToCallHtml(p: GoldApplicationEmailParams & { bookingUrl: string }) {
+  return bookingEmailSkeleton({
+    title: "You're through — 5GM Gold",
+    preheader: 'Your application stood out — pick a time for your call.',
+    eyebrow: 'Invited To Call',
+    headline: `${escapeHtml(p.fullName)}, you've been invited to a call.`,
+    bodyHtml: `${funnelTrackerHtml('invited_to_call')}
+      <p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        Your application stood out. Someone from the 5GM team wants to speak with you directly
+        before Week 1 starts — pick a time below that works for you.
+      </p>
+      ${tipListHtml('Before your call', [
+        'Have 10–15 minutes free, somewhere quiet',
+        'Be ready to talk through your trading so far',
+        "Bring one honest answer for what's holding you back",
+      ])}`,
+    ctaLabel: 'Book Your Call',
+    ctaUrl: p.bookingUrl,
+  })
+}
+
+export function goldAcceptedWeekOneHtml(p: GoldApplicationEmailParams) {
+  return bookingEmailSkeleton({
+    title: "You're in — 5GM Gold",
+    preheader: "You've been accepted into the 12-week Gold Desk programme.",
+    eyebrow: 'Week 1 Confirmed',
+    headline: `Welcome to Week 1, ${escapeHtml(p.fullName)}.`,
+    bodyHtml: `${funnelTrackerHtml('accepted_week_one')}
+      <p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        You're in. You've been accepted into the 12-week Gold Desk programme, starting with Week 1.
+        We'll send everything you need to get started shortly, separately from this email.
+      </p>`,
+    ctaLabel: 'Go to Dashboard',
+    ctaUrl: p.dashboardUrl,
+  })
+}
+
+export function goldApplicationRejectedHtml(p: GoldApplicationEmailParams) {
+  return bookingEmailSkeleton({
+    title: 'Your application — 5GM Gold',
+    preheader: "An update on your Week 1 application, and what's next.",
+    eyebrow: 'Application Update',
+    headline: `Thanks for applying, ${escapeHtml(p.fullName)}.`,
+    bodyHtml: `<p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        After review, we won't be progressing your application for Week 1 right now — this intake
+        was more competitive than we could take everyone through.
+      </p>
+      ${tipListHtml('In the meantime', [
+        'Keep working through The Reset — every lesson compounds',
+        'Future Week 1 intakes open periodically',
+        "Come back when you've got more screen time behind you",
+      ])}`,
+    ctaLabel: 'Back to Dashboard',
+    ctaUrl: p.dashboardUrl,
   })
 }
 

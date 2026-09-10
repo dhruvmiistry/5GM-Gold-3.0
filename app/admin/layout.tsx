@@ -18,6 +18,8 @@ const pageLabels: Record<string, string> = {
   '/admin/users': 'Users',
   '/admin/calendar': 'Calendar',
   '/admin/settings': 'Settings',
+  '/admin/applications': 'Applications',
+  '/admin/gold-desk/settings': 'Gold Funnel Settings',
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

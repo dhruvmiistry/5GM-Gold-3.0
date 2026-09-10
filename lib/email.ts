@@ -3,6 +3,7 @@ import {
   welcomeHtml, inviteHtml, announcementHtml, escapeHtml,
   requestReceivedHtml, bookingConfirmedHtml, mentorAssignedHtml, meetingDetailsHtml,
   bookingCancellationHtml, bookingRescheduleHtml, bookingReminderHtml,
+  goldApplicationReceivedHtml, goldInvitedToCallHtml, goldAcceptedWeekOneHtml, goldApplicationRejectedHtml,
 } from './emailTemplates'
 
 export interface BookingEmailParams {
@@ -110,5 +111,34 @@ export async function sendBookingReminderEmail(to: string, params: BookingEmailP
   return resend.emails.send({
     from: FROM, to, subject: `5GM Gold — call in ${leadLabel}`,
     html: bookingReminderHtml(params, leadLabel, meetingUrl),
+  })
+}
+
+// ── Gold Desk application emails ───────────────────────────────────────
+export async function sendGoldApplicationReceivedEmail(to: string, fullName: string, dashboardUrl: string) {
+  return resend.emails.send({
+    from: FROM, to, subject: "5GM Gold — We've Got Your Application",
+    html: goldApplicationReceivedHtml({ fullName, dashboardUrl }),
+  })
+}
+
+export async function sendGoldInvitedToCallEmail(to: string, fullName: string, dashboardUrl: string, bookingUrl: string) {
+  return resend.emails.send({
+    from: FROM, to, subject: "5GM Gold — You're Through, Book Your Call",
+    html: goldInvitedToCallHtml({ fullName, dashboardUrl, bookingUrl }),
+  })
+}
+
+export async function sendGoldAcceptedWeekOneEmail(to: string, fullName: string, dashboardUrl: string) {
+  return resend.emails.send({
+    from: FROM, to, subject: '5GM Gold — Welcome to Week 1',
+    html: goldAcceptedWeekOneHtml({ fullName, dashboardUrl }),
+  })
+}
+
+export async function sendGoldApplicationRejectedEmail(to: string, fullName: string, dashboardUrl: string) {
+  return resend.emails.send({
+    from: FROM, to, subject: '5GM Gold — An Update on Your Application',
+    html: goldApplicationRejectedHtml({ fullName, dashboardUrl }),
   })
 }

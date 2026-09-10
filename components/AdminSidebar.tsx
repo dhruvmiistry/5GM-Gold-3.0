@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Play, Bell,
   Radio, FileText, Calendar, Settings,
-  ArrowLeft, X, ShieldCheck, BookOpen, RotateCcw, PhoneCall, UserCheck, Mail,
+  ArrowLeft, X, ShieldCheck, BookOpen, RotateCcw,
+  ClipboardList, Shield,
 } from 'lucide-react'
 
 const sections = [
@@ -22,14 +23,6 @@ const sections = [
     ],
   },
   {
-    label: 'Mentor Calls',
-    items: [
-      { label: 'Mentor Calls',  href: '/admin/mentor-calls',  icon: PhoneCall },
-      { label: 'Mentors',       href: '/admin/mentors',       icon: UserCheck },
-      { label: 'Notifications', href: '/admin/notifications', icon: Mail },
-    ],
-  },
-  {
     label: 'Platform',
     items: [
       { label: 'Users',    href: '/admin/users',    icon: Users },
@@ -37,6 +30,11 @@ const sections = [
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
+]
+
+const goldDeskItems = [
+  { label: 'Applications',    href: '/admin/applications',       icon: ClipboardList },
+  { label: 'Funnel Settings', href: '/admin/gold-desk/settings', icon: Shield },
 ]
 
 interface AdminSidebarProps {
@@ -51,10 +49,14 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+
+      {/* Ambient gold glow — same light-source language as the marketing hero */}
+      <div className="absolute -top-16 -left-10 w-64 h-64 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.14) 0%, transparent 70%)', filter: 'blur(30px)' }} />
 
       {/* Header */}
-      <div className="px-4 py-5 border-b border-[rgba(255,255,255,0.05)]">
+      <div className="relative px-4 py-5 border-b border-[rgba(255,255,255,0.05)]">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">
             <Link href="/" className="opacity-80 hover:opacity-100 transition-opacity">
@@ -75,24 +77,48 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
       </div>
 
       {/* Overview link */}
-      <div className="px-3 pt-4 pb-2">
+      <div className="relative px-3 pt-4 pb-2">
         <Link
           href="/admin"
           onClick={onMobileClose}
-          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${
-            pathname === '/admin'
-              ? 'text-white bg-[rgba(255,255,255,0.07)]'
-              : 'text-[#5a5a66] hover:text-[#8e8e9a] hover:bg-[rgba(255,255,255,0.04)]'
-          }`}
+          className={`sidebar-link ${pathname === '/admin' ? 'active' : ''}`}
         >
           <LayoutDashboard size={14} strokeWidth={pathname === '/admin' ? 2 : 1.75} />
-          <span className="font-medium">Overview</span>
-          {pathname === '/admin' && <div className="ml-auto w-1 h-1 rounded-full bg-[#c9a84c]" />}
+          <span className="font-medium flex-1">Overview</span>
         </Link>
       </div>
 
       {/* Sections */}
-      <nav className="flex-1 px-3 pb-4 space-y-5 overflow-y-auto">
+      <nav className="relative flex-1 px-3 pb-4 space-y-5 overflow-y-auto">
+
+        {/* Gold Desk — glowing highlight card, distinct from the plain sections below */}
+        <div className="relative overflow-hidden rounded-xl p-2.5"
+          style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.16)' }}>
+          <div className="absolute inset-0 shimmer pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-1.5 px-1 pb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a84c] pulse-glow" />
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#c9a84c]">Gold Desk</p>
+            </div>
+            <div className="space-y-0.5">
+              {goldDeskItems.map(item => {
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onMobileClose}
+                    className={`sidebar-link ${active ? 'active' : ''}`}
+                  >
+                    <item.icon size={14} strokeWidth={active ? 2 : 1.75} />
+                    <span className="font-medium flex-1">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
         {sections.map(section => (
           <div key={section.label}>
             <p className="px-3 pb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#3a3a46]">{section.label}</p>
@@ -104,15 +130,10 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
                     key={item.href}
                     href={item.href}
                     onClick={onMobileClose}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all ${
-                      active
-                        ? 'text-white bg-[rgba(255,255,255,0.07)]'
-                        : 'text-[#5a5a66] hover:text-[#8e8e9a] hover:bg-[rgba(255,255,255,0.04)]'
-                    }`}
+                    className={`sidebar-link ${active ? 'active' : ''}`}
                   >
                     <item.icon size={14} strokeWidth={active ? 2 : 1.75} />
                     <span className="font-medium flex-1">{item.label}</span>
-                    {active && <div className="w-1 h-1 rounded-full bg-[#c9a84c]" />}
                   </Link>
                 )
               })}
@@ -122,7 +143,7 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
       </nav>
 
       {/* Footer */}
-      <div className="px-3 pb-4 pt-3 border-t border-[rgba(255,255,255,0.05)]">
+      <div className="relative px-3 pb-4 pt-3 border-t border-[rgba(255,255,255,0.05)]">
         <Link
           href="/dashboard"
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-[#3a3a46] hover:text-[#5a5a66] hover:bg-[rgba(255,255,255,0.03)] transition-all"
@@ -137,7 +158,7 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
   return (
     <>
       <aside
-        className="hidden lg:flex flex-col w-[210px] shrink-0 h-screen sticky top-0"
+        className="hidden lg:flex flex-col w-[210px] shrink-0 h-screen sticky top-0 overflow-hidden"
         style={{ background: 'rgba(8,8,9,1)', borderRight: '1px solid rgba(255,255,255,0.05)' }}
       >
         <SidebarContent />
@@ -146,7 +167,7 @@ export default function AdminSidebar({ mobileOpen = false, onMobileClose }: Admi
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onMobileClose} />
-          <aside className="relative z-10 flex flex-col w-[210px] h-full"
+          <aside className="relative z-10 flex flex-col w-[210px] h-full overflow-hidden"
             style={{ background: 'rgba(8,8,9,1)', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             <SidebarContent />
           </aside>
