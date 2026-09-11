@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   let query = admin
     .from('gold_applications')
-    .select('id, full_name, email, phone_number, country, trading_level, commitment_level, status, submitted_at', { count: 'exact' })
+    .select('id, full_name, email, phone_number, country, trading_level, commitment_level, lifetime_memberships, status, submitted_at', { count: 'exact' })
     .order('submitted_at', { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 

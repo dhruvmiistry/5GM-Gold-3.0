@@ -15,6 +15,7 @@ const EXPERIENCE_OPTIONS = ['Less than 6 months', '6–12 months', '1–2 years'
 const LEVEL_OPTIONS = ['Beginner', 'Developing', 'Breakeven', 'Profitable', 'Funded trader', 'Trading personal capital']
 const COMMITMENT_OPTIONS = ['Fully committed', 'Very serious', 'Exploring my options', 'Just curious']
 const EMPLOYMENT_OPTIONS = ['Employed full-time', 'Employed part-time', 'Self-employed / business owner', 'Student', 'Between jobs', 'Retired']
+const LIFETIME_MEMBERSHIP_OPTIONS = ['5GM Academy', "AB's Mentorship"]
 
 const COUNTRIES = [
   'United States', 'United Kingdom', 'Canada', 'Australia', 'New Zealand', 'Ireland',
@@ -157,6 +158,7 @@ export default function GoldApplyPage() {
   const [commitmentLevel, setCommitmentLevel] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState('')
   const [twelveMonthGoal, setTwelveMonthGoal] = useState('')
+  const [lifetimeMemberships, setLifetimeMemberships] = useState<string[]>([])
   const [additionalInformation, setAdditionalInformation] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
@@ -174,6 +176,7 @@ export default function GoldApplyPage() {
   }, [])
 
   const toggleMarket = (m: string) => setMarketsTraded(prev => (prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]))
+  const toggleLifetimeMembership = (m: string) => setLifetimeMemberships(prev => (prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]))
 
   const fullPhoneNumber = `${dialCode} ${phoneNumber.trim()}`
 
@@ -185,7 +188,7 @@ export default function GoldApplyPage() {
       body: JSON.stringify({
         fullName, email, phoneNumber: fullPhoneNumber, country, isOver18,
         tradingExperience, marketsTraded, tradingLevel, propFirmFunded, fundedCapital, personalAccount, biggestChallenge,
-        whyJoin, programmeGoal, currentObstacle, commitmentLevel, employmentStatus, twelveMonthGoal, additionalInformation,
+        whyJoin, programmeGoal, currentObstacle, commitmentLevel, employmentStatus, twelveMonthGoal, lifetimeMemberships, additionalInformation,
       }),
     })
     setSubmitting(false)
@@ -363,6 +366,20 @@ export default function GoldApplyPage() {
                 <Field label="Where would you like your trading to be 12 months from now?">
                   <textarea value={twelveMonthGoal} onChange={e => setTwelveMonthGoal(e.target.value)} rows={3} className="input-dark w-full text-sm resize-none" />
                 </Field>
+                <Field label="Are you a lifetime member of 5GM Academy or AB's Mentorship?">
+                  <div className="flex flex-wrap gap-2">
+                    {LIFETIME_MEMBERSHIP_OPTIONS.map(m => (
+                      <button key={m} onClick={() => toggleLifetimeMembership(m)} type="button"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        style={lifetimeMemberships.includes(m)
+                          ? { background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)', color: '#e8c96d' }
+                          : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8e8e9a' }}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[#5a5a66] text-xs mt-1.5">Select all that apply, or leave blank if neither. Lifetime members may be eligible for an additional incentive.</p>
+                </Field>
                 <Field label="Anything else the 5GM team should know? (optional)">
                   <textarea value={additionalInformation} onChange={e => setAdditionalInformation(e.target.value)} rows={2} className="input-dark w-full text-sm resize-none" />
                 </Field>
@@ -378,6 +395,7 @@ export default function GoldApplyPage() {
                     ['Phone', fullPhoneNumber], ['Experience', tradingExperience],
                     ['Markets', marketsTraded.join(', ') || '—'], ['Level', tradingLevel],
                     ['Commitment', commitmentLevel],
+                    ['Lifetime member', lifetimeMemberships.join(', ') || 'No'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex items-start justify-between gap-4 text-sm">
                       <span className="text-[#5a5a66] text-xs uppercase tracking-wide shrink-0">{label}</span>

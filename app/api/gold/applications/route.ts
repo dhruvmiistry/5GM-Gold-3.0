@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       commitment_level: body.commitmentLevel ?? null,
       employment_status: body.employmentStatus ?? null,
       twelve_month_goal: body.twelveMonthGoal ?? null,
+      lifetime_memberships: body.lifetimeMemberships ?? [],
       additional_information: body.additionalInformation ?? null,
     })
     .select()

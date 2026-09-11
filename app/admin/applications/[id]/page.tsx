@@ -16,7 +16,7 @@ type Application = {
   prop_firm_funded: boolean; funded_capital: string | null; personal_account: boolean; biggest_challenge: string | null
   why_join: string | null; programme_goal: string | null; current_obstacle: string | null
   commitment_level: string | null; employment_status: string | null
-  twelve_month_goal: string | null; additional_information: string | null
+  twelve_month_goal: string | null; lifetime_memberships: string[]; additional_information: string | null
   status: string; qualification_score: number | null
   submitted_at: string; reviewed_at: string | null
   applicant: { full_name: string | null; email: string | null; created_at: string; plan: string } | null
@@ -276,7 +276,15 @@ export default function AdminApplicationDetailPage() {
             <p className="section-label mb-1.5">Application</p>
             <h1 className="text-2xl font-light text-white tracking-tight">{app.full_name}</h1>
           </div>
-          <StatusBadge status={app.status} />
+          <div className="flex items-center gap-2">
+            {app.lifetime_memberships?.length > 0 && (
+              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border text-[#c9a84c] bg-[rgba(201,168,76,0.1)] border-[rgba(201,168,76,0.25)]"
+                title={`Lifetime member: ${app.lifetime_memberships.join(', ')}`}>
+                Lifetime member
+              </span>
+            )}
+            <StatusBadge status={app.status} />
+          </div>
         </div>
 
         {/* Admin actions — 4 fixed decision buttons, always in the same
@@ -357,6 +365,7 @@ export default function AdminApplicationDetailPage() {
           <Row label="Email" value={app.email} />
           <Row label="Phone" value={app.phone_number} />
           <Row label="Country" value={app.country} />
+          <Row label="Lifetime member" value={app.lifetime_memberships?.length ? app.lifetime_memberships.join(', ') : 'No'} />
           <Row label="Member account" value={
             <Link href={`/admin/users/${app.user_id}`} className="text-[#c9a84c] hover:text-[#e8c96d] transition-colors">View profile</Link>
           } />

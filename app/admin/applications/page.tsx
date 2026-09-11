@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import {
   Search, ChevronRight, ChevronLeft, Loader2, X, Inbox,
-  Users, Sparkles, Eye, PhoneCall, Trophy, XCircle, Archive,
+  Users, Sparkles, Eye, PhoneCall, Trophy, XCircle, Archive, Crown,
   LayoutGrid, Phone, CalendarDays, type LucideIcon,
 } from 'lucide-react'
 
 type Application = {
   id: string; full_name: string; email: string; phone_number: string
   country: string | null; trading_level: string | null; commitment_level: string | null
-  status: string; submitted_at: string
+  lifetime_memberships: string[]; status: string; submitted_at: string
 }
 
 // Shared tone language — same fg/bg/border shape used on the application
@@ -230,6 +230,11 @@ export default function AdminApplicationsPage() {
                   <div className="min-w-0">
                     <p className="text-white text-xs font-medium truncate flex items-center gap-1.5">
                       {app.full_name}
+                      {app.lifetime_memberships?.length > 0 && (
+                        <span title={`Lifetime member: ${app.lifetime_memberships.join(', ')}`} className="shrink-0 inline-flex">
+                          <Crown size={11} className="text-[#c9a84c]" />
+                        </span>
+                      )}
                       {app.status === 'new' && <span className="live-dot shrink-0" title="Not yet reviewed" />}
                     </p>
                     <p className="text-[#5a5a66] text-[10px] truncate">{app.email}</p>
@@ -276,6 +281,11 @@ export default function AdminApplicationsPage() {
                     <div className="min-w-0">
                       <p className="text-white text-sm font-medium truncate flex items-center gap-1.5">
                         {app.full_name}
+                        {app.lifetime_memberships?.length > 0 && (
+                          <span title={`Lifetime member: ${app.lifetime_memberships.join(', ')}`} className="shrink-0 inline-flex">
+                            <Crown size={11} className="text-[#c9a84c]" />
+                          </span>
+                        )}
                         {app.status === 'new' && <span className="live-dot shrink-0" />}
                       </p>
                       <p className="text-[#5a5a66] text-[11px] truncate">{app.email}</p>
