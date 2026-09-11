@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import StaffNotes from '@/components/mentorCalls/StaffNotes'
 import {
-  ArrowLeft, Loader2, ChevronDown, RotateCcw, Send,
+  ArrowLeft, Loader2, ChevronDown, RotateCcw, Send, Trash2,
   Inbox, PhoneCall, CheckCircle2, XCircle, Lock, type LucideIcon,
 } from 'lucide-react'
 
@@ -229,6 +229,14 @@ export default function AdminApplicationDetailPage() {
     load()
   }
 
+  const deleteApplication = async () => {
+    setActionBusy('delete')
+    const res = await fetch(`/api/admin/applications/${id}`, { method: 'DELETE' })
+    setActionBusy(null)
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast(d.error || 'Delete failed'); return }
+    router.push('/admin/applications')
+  }
+
   const sendEmail = async (type: string) => {
     setActionBusy(`email:${type}`)
     const res = await fetch(`/api/admin/applications/${id}/emails`, {
@@ -420,6 +428,30 @@ export default function AdminApplicationDetailPage() {
         <Section title="Notes & Activity">
           <StaffNotes apiBase={`/api/admin/applications/${id}/notes`} />
         </Section>
+
+        {/* Danger zone — kept visually separate from the 4 routine decision
+            buttons above so a stray click can't reach it. Permanent delete,
+            not a status change: frees the applicant to submit a fresh
+            application immediately (archive does not, since it's a status
+            demotion, not a row removal). */}
+        <div className="p-5 rounded-2xl" style={{ background: 'rgba(239,68,68,0.03)', border: '1px dashed rgba(239,68,68,0.2)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-red-400 text-xs font-semibold uppercase tracking-wide mb-1">Danger Zone</p>
+              <p className="text-[#5a5a66] text-xs leading-relaxed max-w-md">
+                Permanently deletes this application. The applicant will immediately be able to submit a new one. No email is sent. This cannot be undone.
+              </p>
+            </div>
+            <button
+              onClick={() => requestAction(deleteApplication, `Permanently delete ${app.full_name}'s application? This cannot be undone — they'll be able to submit a new application right away.`)}
+              disabled={actionBusy === 'delete'}
+              className="flex items-center gap-1.5 text-xs font-medium px-3.5 py-2.5 rounded-xl transition-all disabled:opacity-50"
+              style={{ color: '#f87171', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)' }}>
+              {actionBusy === 'delete' ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+              Delete Application
+            </button>
+          </div>
+        </div>
       </div>
 
       {toast && (

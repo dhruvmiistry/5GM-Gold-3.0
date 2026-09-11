@@ -75,3 +75,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   return NextResponse.json(data)
 }
+
+// Admin-only, permanent. Distinct from the 'archive' status action — this
+// actually removes the row (gold_application_notification_jobs cascades,
+// gold_funnel_events.application_id is set null) so uq_gold_applications_active_user
+// no longer blocks the same user from submitting a fresh application.
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const adminUser = await verifyAdmin()
+  if (!adminUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const { id } = await params
+  const admin = createAdminClient()
+
+  const { data: existing, error: fetchError } = await admin
+    .from('gold_applications')
+    .select('id, full_name, email')
+    .eq('id', id)
+    .single()
+  if (fetchError || !existing) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+
+  const { error } = await admin.from('gold_applications').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Logged after the delete succeeds — target_id has no FK, so the audit
+  // trail is free to outlive the row it describes, same as any other action.
+  await logApplicationAction(admin, id, adminUser.id, 'deleted', {
+    metadata: { full_name: existing.full_name, email: existing.email },
+  })
+
+  return NextResponse.json({ success: true })
+}
