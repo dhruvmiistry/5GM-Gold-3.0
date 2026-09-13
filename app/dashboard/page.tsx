@@ -10,6 +10,7 @@ import { useCountdown } from '@/lib/hooks'
 import { Play, Bell, ArrowRight, Lock, RotateCcw, CheckCircle2 } from 'lucide-react'
 import Badge from '@/components/Badge'
 import MiniCountdown from '@/components/theReset/MiniCountdown'
+import GoldPromoCard from '@/components/gold/GoldPromoCard'
 import { resetLessons, type Video, type Announcement } from '@/lib/mockData'
 
 // The Reset is a fixed 20-lesson curriculum — shown as 20 everywhere on the
@@ -75,7 +76,10 @@ export default function DashboardPage() {
           </motion.div>
         </motion.div>
 
-        {/* ── The Reset — primary entry point ─────────────── */}
+        {/* ── Gold Desk — top promotional slot, above The Reset ───── */}
+        <GoldPromoCard />
+
+        {/* ── The Reset — primary free entry point ─────────────── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] }}
         >
