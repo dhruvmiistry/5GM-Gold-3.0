@@ -307,22 +307,32 @@ export function goldApplicationReceivedHtml(p: GoldApplicationEmailParams) {
   })
 }
 
-export function goldInvitedToCallHtml(p: GoldApplicationEmailParams & { bookingUrl: string }) {
+export function goldInvitedToCallHtml(p: GoldApplicationEmailParams & { bookingUrl: string; hostName: string }) {
   return bookingEmailSkeleton({
     title: "You're through — 5GM Gold",
-    preheader: 'Your application stood out — pick a time for your call.',
+    preheader: `Hi, it's ${p.hostName} — your application stood out, let's get your call booked.`,
     eyebrow: 'Invited To Call',
     headline: `${escapeHtml(p.fullName)}, you've been invited to a call.`,
     bodyHtml: `${funnelTrackerHtml('invited_to_call')}
-      <p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
-        Your application stood out. Someone from the 5GM team wants to speak with you directly
-        before Week 1 starts — pick a time below that works for you.
+      <p style="margin:0 0 20px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        Hi, it's ${escapeHtml(p.hostName)} from 5GM — I've gone through your application and
+        everything looks good. We're looking forward to speaking with you on your first lesson
+        for Week 1.
       </p>
-      ${tipListHtml('Before your call', [
-        'Have 10–15 minutes free, somewhere quiet',
-        'Be ready to talk through your trading so far',
-        "Bring one honest answer for what's holding you back",
-      ])}`,
+      <p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        Week 1 is a private call with just you and one of us from the team. We'll be going through:
+      </p>
+      ${tipListHtml('On the call', [
+        'Your current obstacles',
+        'Potential routes you can take',
+        'Trading examination',
+        'Our advice on a funded account plan',
+      ])}
+      <p style="margin:0 0 24px;font-size:15px;color:#8e8e9a;line-height:1.7;">
+        At the end of the call, you'll have the option to join the remaining weeks of the programme.
+        Please book your slot as soon as possible — we'd like to get you onboarded and start the
+        programme with you right away.
+      </p>`,
     ctaLabel: 'Book Your Call',
     ctaUrl: p.bookingUrl,
   })

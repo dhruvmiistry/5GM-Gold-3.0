@@ -1,4 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendGoldInvitedToCallEmail } from '@/lib/email'
+import { getCallHost } from '@/lib/gold/callHosts'
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -68,4 +70,45 @@ export async function enqueueGoldNotification(
     type,
     idempotency_key: `${applicationId}:${type}`,
   })
+}
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://5gmgold.com'
+
+// Sends the "Invited To Call" email immediately (not queued — the cron
+// sweep has a known reliability gap, see app/api/cron/process-notifications/
+// route.ts) and records it the same way the queued path would, so the
+// admin detail page's Emails panel shows accurate "sent X ago" status
+// either way. Shared by the invite_to_call status action and the manual
+// resend button so both use identical validation and send logic.
+export async function sendInvitedToCallEmail(
+  admin: AdminClient, applicationId: string, hostId: string,
+): Promise<{ error: string | null }> {
+  const host = getCallHost(hostId)
+  if (!host) return { error: 'Unknown call host.' }
+
+  const { data: application } = await admin
+    .from('gold_applications').select('full_name, email').eq('id', applicationId).single()
+  if (!application?.email) return { error: 'Application has no email on file.' }
+
+  const { data: config } = await admin
+    .from('gold_funnel_config').select('value').eq('key', 'call_booking_url').maybeSingle()
+  const bookingUrl = typeof config?.value === 'string' ? config.value : null
+  if (!bookingUrl) return { error: 'Call booking link is not configured yet — set it in Gold Desk Settings first.' }
+
+  const dashboardUrl = `${SITE_URL}/dashboard/gold`
+  const { error: sendError } = await sendGoldInvitedToCallEmail(
+    application.email, application.full_name, dashboardUrl, bookingUrl, host.shortName,
+  )
+  if (sendError) return { error: sendError.message }
+
+  await admin.from('gold_application_notification_jobs').upsert({
+    application_id: applicationId,
+    type: 'invited_to_call',
+    idempotency_key: `${applicationId}:invited_to_call`,
+    status: 'sent',
+    sent_at: new Date().toISOString(),
+    last_error: null,
+  }, { onConflict: 'idempotency_key' })
+
+  return { error: null }
 }

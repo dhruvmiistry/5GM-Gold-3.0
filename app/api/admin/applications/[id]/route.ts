@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyAdmin } from '@/lib/auth/verifyRole'
-import { logApplicationAction, enqueueGoldNotification } from '@/lib/gold/applications'
+import { logApplicationAction, enqueueGoldNotification, sendInvitedToCallEmail } from '@/lib/gold/applications'
+import { getCallHost } from '@/lib/gold/callHosts'
 import { NextRequest, NextResponse } from 'next/server'
 
 const STATUS_ACTIONS: Record<string, string> = {
@@ -16,8 +17,9 @@ const STATUS_ACTIONS: Record<string, string> = {
   revert: 'reviewing',
 }
 
-const NOTIFICATION_FOR_STATUS: Partial<Record<string, 'invited_to_call' | 'accepted_week_one' | 'rejected'>> = {
-  invited_to_call: 'invited_to_call',
+// invited_to_call is deliberately absent here — it sends immediately via
+// sendInvitedToCallEmail instead of going through this queued path.
+const NOTIFICATION_FOR_STATUS: Partial<Record<string, 'accepted_week_one' | 'rejected'>> = {
   accepted_week_one: 'accepted_week_one',
   rejected: 'rejected',
 }
@@ -57,21 +59,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // migration 022) — deliberately not derived from call_booking_url being
   // set, since that gets filled in for testing before the real booking
   // backend exists.
+  let callHostId: string | null = null
   if (body.action === 'invite_to_call') {
     const { data: flag } = await admin.from('gold_funnel_config').select('value').eq('key', 'invite_to_call_enabled').maybeSingle()
     if (flag?.value !== true) {
       return NextResponse.json({ error: 'Invite To Call is locked — enable it in Gold Desk Settings once the booking backend is ready.' }, { status: 403 })
     }
+    const host = getCallHost(body.hostId)
+    if (!host) return NextResponse.json({ error: 'Pick who is hosting the call first.' }, { status: 400 })
+    callHostId = host.profileId
   }
 
   const updates: Record<string, unknown> = { status: newStatus, reviewed_at: new Date().toISOString() }
+  if (callHostId) updates.call_host_id = callHostId
   const { data, error } = await admin.from('gold_applications').update(updates).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   await logApplicationAction(admin, id, adminUser.id, body.action, { reason: body.reason ?? null })
 
-  const notificationType = NOTIFICATION_FOR_STATUS[newStatus]
-  if (notificationType) await enqueueGoldNotification(admin, id, notificationType)
+  // invite_to_call sends immediately (see sendInvitedToCallEmail) rather
+  // than going through the queued path — accepted_week_one/rejected still
+  // queue for the cron sweep as before.
+  if (body.action === 'invite_to_call') {
+    const { error: sendError } = await sendInvitedToCallEmail(admin, id, body.hostId)
+    if (sendError) return NextResponse.json({ error: `Status updated, but the email failed to send: ${sendError}` }, { status: 502 })
+  } else {
+    const notificationType = NOTIFICATION_FOR_STATUS[newStatus]
+    if (notificationType) await enqueueGoldNotification(admin, id, notificationType)
+  }
 
   return NextResponse.json(data)
 }

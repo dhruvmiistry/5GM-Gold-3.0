@@ -6,6 +6,7 @@ import {
   sendGoldApplicationReceivedEmail, sendGoldInvitedToCallEmail,
   sendGoldAcceptedWeekOneEmail, sendGoldApplicationRejectedEmail,
 } from '@/lib/email'
+import { getCallHost } from '@/lib/gold/callHosts'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Vercel Cron invokes the configured path with GET (see vercel.json and
@@ -79,6 +80,11 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ mentorCalls: results, goldApplications: goldResults })
 }
 
+// Vercel Cron actually invokes with GET, despite the comment above having
+// claimed this was already handled — it wasn't. Confirmed against the live
+// database: dozens of accepted_week_one/rejected application emails were
+// stuck in 'pending' with zero delivery attempts. Aliasing GET to the same
+// handler (not a separate export) so there's exactly one code path.
 export const GET = POST
 
 type GoldNotificationJob = {
@@ -92,7 +98,7 @@ async function processGoldJob(admin: ReturnType<typeof createAdminClient>, job: 
   // when the job was originally enqueued.
   const { data: application } = await admin
     .from('gold_applications')
-    .select('full_name, email, status')
+    .select('full_name, email, status, call_host_id')
     .eq('id', job.application_id)
     .single()
 
@@ -110,13 +116,22 @@ async function processGoldJob(admin: ReturnType<typeof createAdminClient>, job: 
       break
     }
     case 'invited_to_call': {
+      // Not normally reached — invite_to_call sends immediately via
+      // sendInvitedToCallEmail (see app/api/admin/applications/[id]/route.ts)
+      // rather than being queued. Kept functional here only in case a stale
+      // job from before that change still exists.
+      const host = getCallHost(application.call_host_id)
+      if (!host) {
+        await admin.from('gold_application_notification_jobs').update({ status: 'skipped', last_error: 'no call host assigned' }).eq('id', job.id)
+        return 'skipped'
+      }
       const { data: config } = await admin.from('gold_funnel_config').select('value').eq('key', 'call_booking_url').maybeSingle()
       const bookingUrl = typeof config?.value === 'string' ? config.value : null
       if (!bookingUrl) {
         await admin.from('gold_application_notification_jobs').update({ status: 'skipped', last_error: 'call_booking_url not configured' }).eq('id', job.id)
         return 'skipped'
       }
-      ({ error: sendError } = await sendGoldInvitedToCallEmail(application.email, application.full_name, dashboardUrl, bookingUrl))
+      ({ error: sendError } = await sendGoldInvitedToCallEmail(application.email, application.full_name, dashboardUrl, bookingUrl, host.shortName))
       break
     }
     case 'accepted_week_one': {

@@ -3,16 +3,15 @@
 import { useState, useEffect } from 'react'
 import {
   Save, Loader2, Shield, PenLine, EyeOff, Eye, Lock, Unlock,
-  CheckCircle2, type LucideIcon,
+  CheckCircle2, PhoneCall, type LucideIcon,
 } from 'lucide-react'
 
-// Booking/Invite-To-Call and VSL settings were deliberately removed from
-// this page — the booking backend isn't built yet (nothing to configure),
-// and the VSL is a single fixed video, not something that gets swapped via
-// this UI. Dates were removed too: the funnel is opened/closed manually via
-// Funnel State below, nothing here ever reads week1_start_date/
-// application_deadline. Their columns still exist in gold_funnel_config and
-// are untouched by this page — bring the UI back if that changes.
+// VSL settings were deliberately removed from this page — it's a single
+// fixed video, not something that gets swapped via this UI. Dates were
+// removed too: the funnel is opened/closed manually via Funnel State below,
+// nothing here ever reads week1_start_date/application_deadline. Their
+// columns still exist in gold_funnel_config and are untouched by this page
+// — bring the UI back if that changes.
 type Config = {
   funnel_state: string
   headline: string
@@ -22,6 +21,8 @@ type Config = {
   cta_label: string
   confirmation_headline: string
   confirmation_body: string
+  call_booking_url: string
+  invite_to_call_enabled: boolean
 }
 
 const defaultConfig: Config = {
@@ -33,10 +34,16 @@ const defaultConfig: Config = {
   cta_label: 'Apply For Week 1',
   confirmation_headline: 'Application Received',
   confirmation_body: '',
+  call_booking_url: '',
+  invite_to_call_enabled: false,
 }
 
 function str(v: unknown, fallback: string) {
   return typeof v === 'string' ? v : fallback
+}
+
+function bool(v: unknown, fallback: boolean) {
+  return typeof v === 'boolean' ? v : fallback
 }
 
 const TONE: Record<string, { fg: string; bg: string; border: string }> = {
@@ -140,6 +147,8 @@ export default function GoldFunnelSettingsPage() {
             cta_label: str(data.cta_label, defaultConfig.cta_label),
             confirmation_headline: str(data.confirmation_headline, defaultConfig.confirmation_headline),
             confirmation_body: str(data.confirmation_body, ''),
+            call_booking_url: str(data.call_booking_url, defaultConfig.call_booking_url),
+            invite_to_call_enabled: bool(data.invite_to_call_enabled, defaultConfig.invite_to_call_enabled),
           }
           setConfig(loaded)
           setSavedConfig(loaded)
@@ -162,7 +171,7 @@ export default function GoldFunnelSettingsPage() {
     showToast('Funnel settings published')
   }
 
-  const field = (key: keyof Omit<Config, 'funnel_state'>) => ({
+  const field = (key: keyof Omit<Config, 'funnel_state' | 'invite_to_call_enabled'>) => ({
     value: config[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => setConfig(p => ({ ...p, [key]: e.target.value })),
   })
@@ -206,6 +215,29 @@ export default function GoldFunnelSettingsPage() {
               )
             })}
           </div>
+        </SectionCard>
+
+        {/* Call Booking */}
+        <SectionCard title="Call Booking" icon={PhoneCall} subtitle="Powers the 'Invite To Call' action on an application — one shared booking link for all hosts.">
+          <button onClick={() => setConfig(p => ({ ...p, invite_to_call_enabled: !p.invite_to_call_enabled }))}
+            className="w-full flex items-center justify-between text-left p-3.5 rounded-xl transition-all duration-200"
+            style={config.invite_to_call_enabled
+              ? { background: `linear-gradient(160deg, ${TONE.gold.bg}, rgba(17,17,19,0.75))`, border: `1px solid ${TONE.gold.border}` }
+              : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center gap-2">
+              {config.invite_to_call_enabled ? <Unlock size={13} style={{ color: TONE.gold.fg }} /> : <Lock size={13} className="text-[#5a5a66]" />}
+              <div>
+                <p className="text-xs font-semibold" style={{ color: config.invite_to_call_enabled ? TONE.gold.fg : '#c7c7cf' }}>
+                  Invite To Call {config.invite_to_call_enabled ? 'Enabled' : 'Disabled'}
+                </p>
+                <p className="text-[10.5px] leading-snug" style={{ color: config.invite_to_call_enabled ? '#c7c7cf' : '#5a5a66' }}>
+                  {config.invite_to_call_enabled ? 'Admins can invite applicants to a call.' : 'The Invite To Call button is locked on every application.'}
+                </p>
+              </div>
+            </div>
+          </button>
+
+          <Field label="Calendly Booking Link" span="full" placeholder="https://calendly.com/…" {...field('call_booking_url')} />
         </SectionCard>
 
         {/* Edit Page */}

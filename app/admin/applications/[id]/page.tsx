@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import StaffNotes from '@/components/mentorCalls/StaffNotes'
+import { CALL_HOSTS, getCallHost } from '@/lib/gold/callHosts'
 import {
   ArrowLeft, Loader2, ChevronDown, RotateCcw, Send, Trash2,
   Inbox, PhoneCall, CheckCircle2, XCircle, Lock, type LucideIcon,
@@ -17,7 +18,7 @@ type Application = {
   why_join: string | null; programme_goal: string | null; current_obstacle: string | null
   commitment_level: string | null; employment_status: string | null
   twelve_month_goal: string | null; lifetime_memberships: string[]; additional_information: string | null
-  status: string; qualification_score: number | null
+  status: string; qualification_score: number | null; call_host_id: string | null
   submitted_at: string; reviewed_at: string | null
   applicant: { full_name: string | null; email: string | null; created_at: string; plan: string } | null
   courseProgress: { progressPercentage: number; completedCount: number } | null
@@ -196,6 +197,7 @@ export default function AdminApplicationDetailPage() {
   const [scoreOpen, setScoreOpen] = useState(false)
   const [confirming, setConfirming] = useState<{ run: () => Promise<void>; message: string } | null>(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
+  const [hostPickerOpen, setHostPickerOpen] = useState(false)
   // Defaults locked (false) if the key is missing entirely — e.g. migration
   // 022 not applied yet — same fail-safe the server-side checks use.
   const [inviteToCallEnabled, setInviteToCallEnabled] = useState(false)
@@ -295,6 +297,19 @@ export default function AdminApplicationDetailPage() {
           </div>
         </div>
 
+        {app.call_host_id && (() => {
+          const host = getCallHost(app.call_host_id)
+          const inviteJob = emails.find(e => e.type === 'invited_to_call')
+          if (!host) return null
+          return (
+            <p className="text-[#5a5a66] text-xs flex items-center gap-1.5 -mt-2">
+              <PhoneCall size={11} />
+              Invited by <span className="text-[#c9a84c] font-medium">{host.shortName}</span>
+              {inviteJob?.status === 'sent' && inviteJob.sent_at && <span>&middot; sent {formatRelative(inviteJob.sent_at)}</span>}
+            </p>
+          )
+        })()}
+
         {/* Admin actions — 4 fixed decision buttons, always in the same
             place regardless of status (disabled once already reached), plus
             a low-key Revert for mis-clicks. Every status change is confirmed
@@ -305,10 +320,13 @@ export default function AdminApplicationDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               {DECISIONS.map(d => {
                 const locked = d.action === 'invite_to_call' && !inviteToCallEnabled
+                const onClick = d.action === 'invite_to_call'
+                  ? () => setHostPickerOpen(true)
+                  : () => requestAction(() => performAction(d.action, {}), d.confirm)
                 return (
                   <DecisionButton key={d.action} label={d.label} tone={d.tone} locked={locked}
                     disabled={app.status === d.status || locked} busy={actionBusy === d.action}
-                    onClick={() => requestAction(() => performAction(d.action, {}), d.confirm)} />
+                    onClick={onClick} />
                 )
               })}
             </div>
@@ -465,6 +483,48 @@ export default function AdminApplicationDetailPage() {
         <ConfirmDialog message={confirming.message} busy={confirmBusy}
           onConfirm={confirmAndRun} onCancel={() => setConfirming(null)} />
       )}
+
+      {hostPickerOpen && (
+        <HostPickerDialog
+          onCancel={() => setHostPickerOpen(false)}
+          onPick={host => {
+            setHostPickerOpen(false)
+            requestAction(
+              () => performAction('invite_to_call', { hostId: host.profileId }),
+              `Send ${host.shortName}'s call invitation email to this applicant?`,
+            )
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Picking who's hosting happens before the usual confirm step — the
+// confirm dialog that follows already names the chosen host, so there's
+// no need to ask twice.
+function HostPickerDialog({ onPick, onCancel }: { onPick: (host: (typeof CALL_HOSTS)[number]) => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onCancel}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl p-5"
+        style={{ background: 'rgba(17,17,19,0.98)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+        <p className="text-sm text-white leading-relaxed mb-1">Who&apos;s hosting this call?</p>
+        <p className="text-xs text-[#5a5a66] leading-relaxed mb-4">The invitation email will be signed with this name.</p>
+        <div className="space-y-2 mb-4">
+          {CALL_HOSTS.map(host => (
+            <button key={host.profileId} onClick={() => onPick(host)}
+              className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-white transition-all hover:-translate-y-0.5"
+              style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.18)' }}>
+              {host.shortName}
+            </button>
+          ))}
+        </div>
+        <button onClick={onCancel}
+          className="w-full px-3.5 py-2 rounded-lg text-xs font-medium text-[#8e8e9a] transition-all"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          Cancel
+        </button>
+      </div>
     </div>
   )
 }

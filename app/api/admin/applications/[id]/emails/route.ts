@@ -1,8 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyAdmin } from '@/lib/auth/verifyRole'
-import { logApplicationAction } from '@/lib/gold/applications'
+import { logApplicationAction, sendInvitedToCallEmail } from '@/lib/gold/applications'
 import {
-  sendGoldApplicationReceivedEmail, sendGoldInvitedToCallEmail,
+  sendGoldApplicationReceivedEmail,
   sendGoldAcceptedWeekOneEmail, sendGoldApplicationRejectedEmail,
 } from '@/lib/email'
 import { NextRequest, NextResponse } from 'next/server'
@@ -44,28 +44,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const admin = createAdminClient()
+
+  // invited_to_call reuses whichever host was picked when the invite was
+  // first sent (recorded on the application row) — resend never prompts
+  // for a host again, same as it never prompts for anything else.
+  if (type === 'invited_to_call') {
+    const { data: application } = await admin.from('gold_applications').select('call_host_id').eq('id', id).single()
+    if (!application?.call_host_id) {
+      return NextResponse.json({ error: 'No call host was assigned yet — use Invite To Call first.' }, { status: 400 })
+    }
+    const { error: sendError } = await sendInvitedToCallEmail(admin, id, application.call_host_id)
+    if (sendError) return NextResponse.json({ error: sendError }, { status: 502 })
+    await logApplicationAction(admin, id, adminUser.id, 'email_sent', { metadata: { type } })
+    return NextResponse.json({ success: true })
+  }
+
   const { data: application } = await admin.from('gold_applications').select('full_name, email').eq('id', id).single()
   if (!application?.email) return NextResponse.json({ error: 'Application has no email on file' }, { status: 400 })
 
   const dashboardUrl = `${SITE_URL}/dashboard/gold`
   let sendError: { message: string } | null = null
 
-  switch (type as EmailType) {
+  switch (type as Exclude<EmailType, 'invited_to_call'>) {
     case 'received': {
       ({ error: sendError } = await sendGoldApplicationReceivedEmail(application.email, application.full_name, dashboardUrl))
-      break
-    }
-    case 'invited_to_call': {
-      const { data: enabledFlag } = await admin.from('gold_funnel_config').select('value').eq('key', 'invite_to_call_enabled').maybeSingle()
-      if (enabledFlag?.value !== true) {
-        return NextResponse.json({ error: 'Invite To Call is locked — enable it in Gold Desk Settings once the booking backend is ready.' }, { status: 403 })
-      }
-      const { data: config } = await admin.from('gold_funnel_config').select('value').eq('key', 'call_booking_url').maybeSingle()
-      const bookingUrl = typeof config?.value === 'string' ? config.value : null
-      if (!bookingUrl) {
-        return NextResponse.json({ error: 'Call booking URL is not configured yet — set it in Gold Desk Settings first.' }, { status: 400 })
-      }
-      ({ error: sendError } = await sendGoldInvitedToCallEmail(application.email, application.full_name, dashboardUrl, bookingUrl))
       break
     }
     case 'accepted_week_one': {

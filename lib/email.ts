@@ -122,10 +122,10 @@ export async function sendGoldApplicationReceivedEmail(to: string, fullName: str
   })
 }
 
-export async function sendGoldInvitedToCallEmail(to: string, fullName: string, dashboardUrl: string, bookingUrl: string) {
+export async function sendGoldInvitedToCallEmail(to: string, fullName: string, dashboardUrl: string, bookingUrl: string, hostName: string) {
   return resend.emails.send({
     from: FROM, to, subject: "5GM Gold — You're Through, Book Your Call",
-    html: goldInvitedToCallHtml({ fullName, dashboardUrl, bookingUrl }),
+    html: goldInvitedToCallHtml({ fullName, dashboardUrl, bookingUrl, hostName }),
   })
 }
 
